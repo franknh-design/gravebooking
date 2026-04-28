@@ -272,6 +272,12 @@
     function renderActions(b) {
         let knapper = [];
 
+        // Spesialhåndtering for blokkeringer
+        if (b.ordreId.startsWith('BLOKK-')) {
+            knapper.push(`<button class="action-btn danger" onclick="slettBlokkering('${b.ordreId}')">Fjern blokkering</button>`);
+            return `<div class="actions-rad">${knapper.join('')}</div>`;
+        }
+
         if (b.status === 'venter_godkjenning') {
             knapper.push(`<button class="action-btn primary" onclick="godkjenn('${b.ordreId}')">Godkjenn booking</button>`);
             knapper.push(`<button class="action-btn danger" onclick="avvis('${b.ordreId}')">Avvis</button>`);
@@ -357,6 +363,65 @@
             alert(data.advarsel);
             lukkDetalj();
             lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    // ----- Blokker datoer -----
+    window.visBlokker = function() {
+        const startDato = prompt('Fra dato (format: YYYY-MM-DD, f.eks. 2026-05-15):');
+        if (!startDato) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDato)) {
+            alert('Ugyldig format. Bruk YYYY-MM-DD');
+            return;
+        }
+        
+        const sluttDato = prompt('Til dato (format: YYYY-MM-DD):');
+        if (!sluttDato) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(sluttDato)) {
+            alert('Ugyldig format. Bruk YYYY-MM-DD');
+            return;
+        }
+        
+        if (sluttDato < startDato) {
+            alert('Sluttdato må være etter startdato');
+            return;
+        }
+        
+        const grunn = prompt('Grunn (f.eks. "Egen bruk", "Service", "Vedlikehold"):') || 'Blokkert av admin';
+        
+        if (!confirm(`Blokker ${startDato} til ${sluttDato}?\nGrunn: ${grunn}`)) return;
+        
+        api('/api/admin/blokker-datoer', {
+            method: 'POST',
+            body: JSON.stringify({ startDato, sluttDato, grunn })
+        }).then(async res => {
+            const data = await res.json();
+            if (!res.ok) {
+                if (data.konflikter) {
+                    alert('Konflikt med eksisterende booking:\n' + data.konflikter.join('\n'));
+                } else {
+                    alert('Feil: ' + data.feil);
+                }
+                return;
+            }
+            alert(data.melding);
+            lastData();
+        }).catch(err => alert('Feil: ' + err.message));
+    };
+
+    // Slett blokkering fra detaljvisning (når bookingen er BLOKK-*)
+    window.slettBlokkering = async function(ordreId) {
+        if (!confirm('Fjern blokkeringen?')) return;
+        try {
+            const res = await api(`/api/admin/blokker-datoer/${ordreId}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('Blokkering fjernet');
+                lukkDetalj();
+                lastData();
+            } else {
+                const data = await res.json();
+                alert('Feil: ' + data.feil);
+            }
         } catch (e) { alert('Feil: ' + e.message); }
     };
 

@@ -176,6 +176,87 @@ router.post('/godkjenn-retur/:ordreId', async (req, res) => {
     }
 });
 
+// Blokker datoer (admin reserverer for egen bruk eller vedlikehold)
+router.post('/blokker-datoer', async (req, res) => {
+    try {
+        const { startDato, sluttDato, grunn } = req.body;
+        
+        if (!startDato || !sluttDato) {
+            return res.status(400).json({ feil: 'Mangler datoer' });
+        }
+        
+        const db = getDb();
+        
+        // Sjekk om periode allerede har bookinger
+        const konflikter = await db.all(`
+            SELECT ordreId, kundeNavn FROM bookings 
+            WHERE status NOT IN ('avbrutt', 'fullfoert')
+            AND NOT (sluttDato < ? OR startDato > ?)
+        `, [startDato, sluttDato]);
+
+        if (konflikter.length > 0) {
+            return res.status(409).json({ 
+                feil: 'Det finnes eksisterende bookinger i denne perioden',
+                konflikter: konflikter.map(k => `${k.ordreId} (${k.kundeNavn})`)
+            });
+        }
+
+        const start = new Date(startDato);
+        const slutt = new Date(sluttDato);
+        const antallDager = Math.ceil((slutt - start) / (1000 * 60 * 60 * 24)) + 1;
+        
+        const ordreId = `BLOKK-${Date.now()}`;
+        
+        await db.run(`
+            INSERT INTO bookings (
+                ordreId, kundeNavn, kundeTelefon, kundeEpost,
+                startDato, sluttDato, antallDager, totalPris, status,
+                notater, ansvarBekreftet
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aktiv', ?, 1)
+        `, [
+            ordreId,
+            'BLOKKERT (Admin)',
+            '0',
+            'admin@internt',
+            startDato,
+            sluttDato,
+            antallDager,
+            0,
+            grunn || 'Blokkert av admin'
+        ]);
+
+        res.json({ 
+            ok: true, 
+            ordreId,
+            melding: `Blokkert ${antallDager} dag(er) fra ${startDato} til ${sluttDato}` 
+        });
+    } catch (error) {
+        console.error('Blokker-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Slett blokkering (kun for BLOKK-ordre)
+router.delete('/blokker-datoer/:ordreId', async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        if (!ordreId.startsWith('BLOKK-')) {
+            return res.status(400).json({ feil: 'Kan kun slette blokkeringer (BLOKK-*)' });
+        }
+        
+        const db = getDb();
+        const result = await db.run('DELETE FROM bookings WHERE ordreId = ?', [ordreId]);
+        
+        if (result.changes === 0) {
+            return res.status(404).json({ feil: 'Ikke funnet' });
+        }
+        
+        res.json({ ok: true, melding: 'Blokkering fjernet' });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Registrer skade - belaster (deler av) depositum
 router.post('/registrer-skade/:ordreId', async (req, res) => {
     try {
