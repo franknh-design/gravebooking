@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gravebooking</title>
+    <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+    <!-- Login-skjerm -->
+    <div id="loginSkjerm" class="login-overlay">
+        <div class="login-boks">
+            <h1>Admin</h1>
+            <p>Skriv inn admin-token for å fortsette</p>
+            <input type="password" id="loginToken" placeholder="Admin token" autocomplete="off">
+            <button onclick="loggInn()">Logg inn</button>
+            <p class="login-feil" id="loginFeil"></p>
+        </div>
+    </div>
+
+    <!-- Hovedinnhold -->
+    <div id="hovedinnhold" style="display:none;">
+        <header class="topbar">
+            <h1>Gravebooking Admin</h1>
+            <div class="topbar-actions">
+                <a href="/qr.html" class="btn-tekst">QR-kode</a>
+                <a href="/api/admin/eksport.csv?token=" id="eksportLenke" class="btn-tekst">Eksporter CSV</a>
+                <button class="btn-tekst" onclick="loggUt()">Logg ut</button>
+            </div>
+        </header>
+
+        <!-- Statistikk -->
+        <section class="statistikk-rad" id="statistikkRad"></section>
+
+        <!-- Filter -->
+        <section class="filter-rad">
+            <button class="filter-knapp aktiv" data-status="alle" onclick="settFilter('alle')">Alle</button>
+            <button class="filter-knapp" data-status="venter_godkjenning" onclick="settFilter('venter_godkjenning')">Venter godkjenning</button>
+            <button class="filter-knapp" data-status="godkjent,aktiv" onclick="settFilter('godkjent,aktiv')">Aktive</button>
+            <button class="filter-knapp" data-status="venter_godkjenning_retur" onclick="settFilter('venter_godkjenning_retur')">Venter retur</button>
+            <button class="filter-knapp" data-status="fullfoert" onclick="settFilter('fullfoert')">Fullført</button>
+            <button class="filter-knapp" data-status="avbrutt" onclick="settFilter('avbrutt')">Avbrutt</button>
+        </section>
+
+        <!-- Bookingliste -->
+        <section id="bookingListe"></section>
+    </div>
+
+    <!-- Detaljmodal -->
+    <div class="modal-overlay" id="detaljModal" onclick="if(event.target===this) lukkDetalj()">
+        <div class="modal-innhold detalj-modal">
+            <div id="detaljInnhold"></div>
+        </div>
+    </div>
+
+    <!-- Bilde-lightbox -->
+    <div class="lightbox" id="lightbox" onclick="lukkLightbox()">
+        <img id="lightboxBilde" alt="">
+        <div class="lightbox-tekst" id="lightboxTekst"></div>
+    </div>
+
+    <script src="/admin.js"></script>
+</body>
+</html>

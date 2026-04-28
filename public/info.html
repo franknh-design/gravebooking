@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff5b24">
+    <title>Volvo EC20E - Info</title>
+    <style>
+        :root {
+            --primary: #ff5b24;
+            --primary-mork: #e04a18;
+            --bg: #f7f7f5;
+            --text: #1a1a1a;
+            --tekst-muted: #666;
+            --border: #e0e0e0;
+            --info: #1c5fa8;
+            --info-bg: #e8f1fa;
+            --warning: #b8860b;
+            --warning-bg: #fff7d6;
+            --feil: #c00;
+            --feil-bg: #fee;
+            --success: #2d7a3a;
+            --success-bg: #e8f5ea;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+        .header .undertekst {
+            color: var(--tekst-muted);
+            font-size: 0.9rem;
+        }
+
+        .seksjon {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        .seksjon-tittel {
+            font-size: 0.75rem;
+            color: var(--tekst-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .seksjon h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+        }
+
+        /* Sikkerhets-boks (mest fremtredende) */
+        .sikkerhet {
+            background: var(--feil-bg);
+            border-left: 4px solid var(--feil);
+        }
+        .sikkerhet h2 { color: var(--feil); }
+        .sikkerhet p { font-size: 0.9rem; }
+        .sikkerhet a {
+            display: block;
+            background: var(--feil);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 1.05rem;
+        }
+
+        /* Kontakt-boks */
+        .kontakt {
+            background: var(--info-bg);
+            border-left: 4px solid var(--info);
+        }
+        .kontakt h2 { color: var(--info); }
+        .kontakt-rad {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .kontakt-knapp {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .kontakt-knapp.ring {
+            background: var(--info);
+            color: white;
+        }
+        .kontakt-knapp.sms {
+            background: white;
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+
+        /* Steg-liste */
+        .stegliste {
+            list-style: none;
+            counter-reset: steg;
+        }
+        .stegliste li {
+            counter-increment: steg;
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 10px;
+            font-size: 0.92rem;
+        }
+        .stegliste li::before {
+            content: counter(steg);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 26px;
+            height: 26px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .stegliste li strong { display: block; margin-bottom: 2px; }
+
+        /* Sjekkliste */
+        .sjekk-liste {
+            list-style: none;
+        }
+        .sjekk-liste li {
+            padding: 8px 0 8px 28px;
+            position: relative;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .sjekk-liste li:last-child { border-bottom: none; }
+        .sjekk-liste li::before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            top: 7px;
+            color: var(--tekst-muted);
+            font-size: 1.2rem;
+        }
+
+        /* Detaljer-grid */
+        .detaljer-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 14px;
+            font-size: 0.9rem;
+        }
+        .detaljer-grid dt {
+            color: var(--tekst-muted);
+            font-weight: 500;
+        }
+        .detaljer-grid dd { font-weight: 500; }
+
+        /* Footer-knapp */
+        .footer-knapp {
+            display: block;
+            background: var(--text);
+            color: white;
+            text-align: center;
+            padding: 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        .merknad {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--tekst-muted);
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="maskinNavn">Volvo EC20E</h1>
+        <div class="undertekst" id="maskinBeskrivelse">2 tonns gravemaskin med tiltfeste</div>
+    </div>
+
+    <!-- Sikkerhet (alltid øverst) -->
+    <div class="seksjon sikkerhet">
+        <div class="seksjon-tittel">Viktig</div>
+        <h2>Ring før du graver</h2>
+        <p>Lovpålagt og gratis kabelpåvisning før all graving. Skader på kabler eller rør er <strong>ditt ansvar</strong> og kan koste 50 000+ kr.</p>
+        <a href="tel:09146">Ring Geomatikk 09146</a>
+    </div>
+
+    <!-- Kontakt (også viktig) -->
+    <div class="seksjon kontakt" id="kontaktSeksjon">
+        <div class="seksjon-tittel">Trenger du hjelp?</div>
+        <h2>Kontakt utleier</h2>
+        <p>Spørsmål, problemer eller skade på maskinen? Ring eller send SMS direkte.</p>
+        <div class="kontakt-rad">
+            <a href="tel:" id="ringLenke" class="kontakt-knapp ring">Ring</a>
+            <a href="sms:" id="smsLenke" class="kontakt-knapp sms">Send SMS</a>
+        </div>
+    </div>
+
+    <!-- Slik bruker du maskinen -->
+    <div class="seksjon">
+        <div class="seksjon-tittel">Slik bruker du maskinen</div>
+        <ol class="stegliste">
+            <li>
+                <strong>Hent nøkkel fra nøkkelboksen</strong>
+                Skriv inn koden du fikk på SMS. Boksen sitter på baksiden av maskinen.
+            </li>
+            <li>
+                <strong>Sjekk drivstoff</strong>
+                Maskinen bruker diesel. Tanken sitter under setet — løft puten. Bruk vanlig diesel fra pumpe.
+            </li>
+            <li>
+                <strong>Start motoren</strong>
+                Sett girspaken i nøytral, vri nøkkelen. La motoren gå i 30 sekunder før du begynner.
+            </li>
+            <li>
+                <strong>Tiltfeste og skuffer</strong>
+                Tiltfeste betjenes med ekstra hydraulikk-bryter på høyre spak. Skuffer byttes manuelt med splittene.
+            </li>
+            <li>
+                <strong>Stopp før du flytter deg</strong>
+                Senk skuffen til bakken og slå av motoren før du går av.
+            </li>
+        </ol>
+    </div>
+
+    <!-- Sikker bruk -->
+    <div class="seksjon">
+        <div class="seksjon-tittel">Sikker bruk</div>
+        <h2>Husk dette</h2>
+        <ul style="font-size: 0.92rem; padding-left: 20px;">
+            <li>Bruk hjelm og vernebriller når du arbeider</li>
+            <li>Hold avstand til andre — minst 5 meter</li>
+            <li>Ikke grav nærmere enn 1 meter fra bygninger uten å sjekke fundament</li>
+            <li>Ved sterk vind, regn eller is — vurder om det er trygt å bruke</li>
+            <li>Aldri gå under eller foran skuffen når den er hevet</li>
+            <li>Drikk og kjør? Aldri. Det er ditt eget ansvar</li>
+        </ul>
+    </div>
+
+    <!-- Spesifikasjoner -->
+    <div class="seksjon">
+        <div class="seksjon-tittel">Maskindetaljer</div>
+        <dl class="detaljer-grid">
+            <dt>Maskin:</dt><dd id="specMaskin">Volvo EC20E</dd>
+            <dt>Vekt:</dt><dd>2 000 kg</dd>
+            <dt>Drivstoff:</dt><dd>Diesel</dd>
+            <dt>Skuffer:</dt><dd id="specSkuffer">Graveskuff, pusseskuff, smalskuff</dd>
+            <dt>Tilhenger:</dt><dd id="specTilhenger">Brian James Digger Plant 2700</dd>
+            <dt>Sted:</dt><dd id="specAdresse">Bjørnøygata 42, Tromsø</dd>
+        </dl>
+    </div>
+
+    <!-- Sjekkliste før retur -->
+    <div class="seksjon">
+        <div class="seksjon-tittel">Før du leverer tilbake</div>
+        <h2>Sjekkliste</h2>
+        <ul class="sjekk-liste">
+            <li>Maskinen er rengjort utvendig (jord og leire fjernet)</li>
+            <li>Førerhuset er ryddet — ingen søppel</li>
+            <li>Drivstofftanken er fylt opp til samme nivå som ved henting</li>
+            <li>Skuffer er på plass og ryddet</li>
+            <li>Nøkkelen er tilbake i nøkkelboksen</li>
+            <li>Bilder er tatt via lenken på SMS</li>
+        </ul>
+    </div>
+
+    <!-- Til hovedsiden -->
+    <a href="/" class="footer-knapp">Se ledige datoer og book på nytt →</a>
+
+    <p class="merknad">QR-koden er kun for informasjon — for å booke maskinen må du gå via hovedsiden eller ringe.</p>
+
+    <script>
+        async function lastInfo() {
+            try {
+                const res = await fetch('/api/booking/konfig');
+                const data = await res.json();
+                
+                document.getElementById('maskinNavn').textContent = data.maskin.navn;
+                document.getElementById('maskinBeskrivelse').textContent = data.maskin.beskrivelse;
+                document.getElementById('specMaskin').textContent = data.maskin.navn;
+                document.getElementById('specSkuffer').textContent = data.maskin.utstyrInkludert.join(', ');
+                document.getElementById('specTilhenger').textContent = data.maskin.tilhenger;
+                document.getElementById('specAdresse').textContent = data.maskin.adresse;
+            } catch (err) {
+                console.error('Kunne ikke laste konfig', err);
+            }
+
+            // Hent kontakttelefon
+            try {
+                const res = await fetch('/api/info/kontakt');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.telefon) {
+                        document.getElementById('ringLenke').href = `tel:${data.telefon}`;
+                        document.getElementById('smsLenke').href = `sms:${data.telefon}`;
+                    }
+                }
+            } catch (err) { /* */ }
+        }
+
+        lastInfo();
+    </script>
+</body>
+</html>

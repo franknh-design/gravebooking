@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Debug - Gravebooking</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        body { background: #f7f7f5; color: #1a1a1a; padding: 20px; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        .header {
+            background: #fff7d6;
+            border-left: 4px solid #f5c542;
+            color: #6b4d00;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 1.2rem; margin-bottom: 6px; }
+        .header p { font-size: 0.9rem; }
+
+        .knapp-rad {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .knapp {
+            padding: 10px 16px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: #1a1a1a;
+            font-family: inherit;
+        }
+        .knapp:hover { background: #f0f0ec; }
+        .knapp.primary {
+            background: #ff5b24;
+            color: white;
+            border-color: #ff5b24;
+        }
+        .knapp.primary:hover { background: #e04a18; }
+        .knapp.danger {
+            background: white;
+            color: #c00;
+            border-color: #c00;
+        }
+
+        h2 { font-size: 1.1rem; margin-bottom: 12px; }
+
+        .seksjon {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .sms {
+            background: #f7f7f5;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ff5b24;
+        }
+        .sms-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .sms-til { font-weight: 600; color: #1a1a1a; font-family: monospace; }
+        .sms-tekst {
+            font-size: 0.88rem;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .ingen { text-align: center; color: #666; padding: 30px; font-size: 0.9rem; }
+
+        .lenker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+        }
+        .lenke-kort {
+            background: #f7f7f5;
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1a1a1a;
+            border: 1px solid transparent;
+        }
+        .lenke-kort:hover { border-color: #ff5b24; }
+        .lenke-tittel { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+        .lenke-beskrivelse { font-size: 0.8rem; color: #666; }
+
+        .auto-oppdater {
+            font-size: 0.8rem;
+            color: #666;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Mock Debug</h1>
+            <p>Lokal testing av Gravebooking. Vipps, iglohome og SMS er simulert. Sett <code>MOCK_MODE=false</code> for å bruke ekte tjenester.</p>
+        </div>
+
+        <h2>Sider å teste</h2>
+        <div class="seksjon">
+            <div class="lenker-grid">
+                <a href="/" class="lenke-kort">
+                    <div class="lenke-tittel">Bookingside</div>
+                    <div class="lenke-beskrivelse">Hovedflyten for kunder</div>
+                </a>
+                <a href="/admin.html" class="lenke-kort">
+                    <div class="lenke-tittel">Admin-panel</div>
+                    <div class="lenke-beskrivelse">Godkjenn, sammenlign bilder</div>
+                </a>
+                <a href="/info.html" class="lenke-kort">
+                    <div class="lenke-tittel">Info-side</div>
+                    <div class="lenke-beskrivelse">Det QR-koden peker til</div>
+                </a>
+                <a href="/qr.html" class="lenke-kort">
+                    <div class="lenke-tittel">QR-generator</div>
+                    <div class="lenke-beskrivelse">Skriv ut klistrelapp</div>
+                </a>
+            </div>
+        </div>
+
+        <h2 style="display: flex; align-items: center;">
+            SMS-logg
+            <span class="auto-oppdater" id="oppdatert"></span>
+        </h2>
+        <div class="seksjon">
+            <div class="knapp-rad">
+                <button class="knapp" onclick="lastSms()">Oppdater</button>
+                <button class="knapp danger" onclick="nullstill()">Nullstill logg</button>
+            </div>
+            <div id="smsListe"></div>
+        </div>
+
+        <h2>Testdata</h2>
+        <div class="seksjon">
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                Lag eller slett testdata for å teste flyten uten å måtte fylle ut skjemaet flere ganger.
+            </p>
+            <div class="knapp-rad">
+                <button class="knapp primary" onclick="seedData()">Generer 5 testbookinger</button>
+                <button class="knapp danger" onclick="slettAlleData()">Slett alle bookinger</button>
+            </div>
+            <div id="seedResultat" style="margin-top: 12px; font-size: 0.9rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function lastSms() {
+            try {
+                const res = await fetch('/api/mock/sms-logg');
+                const data = await res.json();
+                renderSms(data);
+                document.getElementById('oppdatert').textContent = 'Oppdatert ' + new Date().toLocaleTimeString('nb-NO');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function renderSms(meldinger) {
+            const el = document.getElementById('smsListe');
+            if (!meldinger || meldinger.length === 0) {
+                el.innerHTML = '<div class="ingen">Ingen SMS sendt ennå. Lag en booking eller godkjenn en.</div>';
+                return;
+            }
+            el.innerHTML = meldinger.map(m => `
+                <div class="sms">
+                    <div class="sms-meta">
+                        <span class="sms-til">📱 ${m.til}</span>
+                        <span>${new Date(m.tidspunkt).toLocaleString('nb-NO')}</span>
+                    </div>
+                    <div class="sms-tekst">${escapeHtml(m.melding)}</div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(s) {
+            return s.replace(/[&<>'"]/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+            }[c]));
+        }
+
+        async function nullstill() {
+            if (!confirm('Slette alle SMS i loggen?')) return;
+            await fetch('/api/mock/sms-logg', { method: 'DELETE' });
+            lastSms();
+        }
+
+        async function seedData() {
+            const knapp = event.target;
+            knapp.disabled = true;
+            knapp.textContent = 'Genererer...';
+            try {
+                const res = await fetch('/api/mock/seed', { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('seedResultat').innerHTML = 
+                    `<div style="color:#2d7a3a;">✓ ${data.melding}</div>`;
+                lastSms();
+            } catch (err) {
+                document.getElementById('seedResultat').innerHTML = 
+                    `<div style="color:#c00;">Feil: ${err.message}</div>`;
+            } finally {
+                knapp.disabled = false;
+                knapp.textContent = 'Generer 5 testbookinger';
+            }
+        }
+
+        async function slettAlleData() {
+            if (!confirm('Slett ALLE bookinger og bilder? Dette kan ikke angres.')) return;
+            try {
+                const res = await fetch('/api/mock/slett-alt', { method: 'DELETE' });
+                const data = await res.json();
+                document.getElementById('seedResultat').innerHTML = 
+                    `<div style="color:#2d7a3a;">✓ ${data.melding}</div>`;
+            } catch (err) {
+                document.getElementById('seedResultat').innerHTML = 
+                    `<div style="color:#c00;">Feil: ${err.message}</div>`;
+            }
+        }
+
+        // Init
+        lastSms();
+        setInterval(lastSms, 5000);
+    </script>
+</body>
+</html>

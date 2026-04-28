@@ -1,0 +1,52 @@
+# --- HEMMELIGHETER (ALDRI PÅ GITHUB) ---
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# --- KUNDEDATA (ALDRI PÅ GITHUB) ---
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm
+uploads/
+backup/
+
+# --- LOGGER ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- NODE_MODULES ---
+node_modules/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# --- BYGG / TEMP ---
+dist/
+build/
+tmp/
+temp/
+*.tmp
+
+# --- SQLITE BACKUPS ---
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+
+# --- PRIVATE BILDER ---
+# Kommenter ut hvis du laster opp markedsføringsbilder med tillatelse
+# public/img/
+
+# --- IGLOHOME / VIPPS / SMS-konfigurasjon ---
+config/secrets.js
+config/local.js

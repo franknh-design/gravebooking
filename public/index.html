@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lei Volvo EC20E - Tromsø</title>
+    <style>
+        :root {
+            --primary: #ff5b24;
+            --primary-mork: #e04a18;
+            --bg: #f7f7f5;
+            --text: #1a1a1a;
+            --tekst-muted: #666;
+            --border: #e0e0e0;
+            --opptatt: #f5d4d4;
+            --opptatt-tekst: #c44;
+            --valgt: #ff5b24;
+            --valgt-tekst: white;
+            --range: #ffe5db;
+            --hover: #f0f0ec;
+            --advarsel: #fff7e0;
+            --advarsel-border: #f5c542;
+            --info: #e8f4ff;
+            --info-border: #4a9eff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+
+        /* Hero-banner */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background-image: url('/img/ec20e.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, transparent 0%, transparent 50%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0; height: 60px;
+            background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+            pointer-events: none;
+        }
+        .hero-tekst {
+            position: relative; z-index: 2;
+            text-align: center; color: white;
+            padding: 0 20px 50px;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.8), 0 0 30px rgba(0,0,0,0.4);
+        }
+        .hero-tekst h1 {
+            font-size: 2.4rem; margin-bottom: 8px;
+            color: white; font-weight: 700; letter-spacing: -0.5px;
+        }
+        .hero-tekst .subtitle {
+            color: rgba(255, 255, 255, 0.95); font-size: 1.05rem;
+        }
+        @media (max-width: 600px) {
+            .hero { height: 320px; }
+            .hero-tekst { padding-bottom: 40px; }
+            .hero-tekst h1 { font-size: 1.7rem; }
+            .hero-tekst .subtitle { font-size: 0.9rem; }
+        }
+
+        h2 { font-size: 1.05rem; margin-bottom: 14px; }
+        h3 { font-size: 0.9rem; margin: 14px 0 8px; color: var(--tekst-muted); font-weight: 600; }
+
+        /* Maskininfo-stripe over kalender/skjema */
+        .maskin-info {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 0.85rem;
+        }
+        .maskin-info-rad { display: flex; align-items: center; gap: 6px; }
+        .maskin-info-label { color: var(--tekst-muted); }
+        .maskin-info-verdi { font-weight: 500; }
+
+        /* To-kolonne layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+        @media (min-width: 880px) {
+            .layout {
+                grid-template-columns: 380px 1fr;
+            }
+            .kalender-card { position: sticky; top: 20px; }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        /* Kalender */
+        .kalender-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+        .kalender-nav {
+            background: none; border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%;
+            cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text);
+        }
+        .kalender-nav:hover:not(:disabled) { background: var(--hover); }
+        .kalender-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+        .maaned-label { font-size: 1rem; font-weight: 600; }
+        .ukedag-rad {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 3px; margin-bottom: 6px;
+        }
+        .ukedag {
+            text-align: center; font-size: 0.7rem; font-weight: 600;
+            color: #888; padding: 2px 0;
+        }
+        .dager-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .dag {
+            aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; cursor: pointer;
+            font-size: 0.85rem;
+            border: 1px solid transparent;
+            user-select: none;
+            transition: background 0.1s;
+            min-height: 36px;
+        }
+        .dag.tom { cursor: default; }
+        .dag:not(.tom):not(.opptatt):not(.fortid):hover { background: var(--hover); }
+        .dag.fortid { color: #ccc; cursor: not-allowed; }
+        .dag.opptatt {
+            background: var(--opptatt); color: var(--opptatt-tekst);
+            cursor: not-allowed; text-decoration: line-through;
+        }
+        .dag.idag { font-weight: 700; border-color: var(--primary); }
+        .dag.valgt {
+            background: var(--valgt); color: var(--valgt-tekst); font-weight: 600;
+        }
+        .dag.range { background: var(--range); }
+
+        .legende {
+            display: flex; gap: 12px; margin-top: 12px;
+            font-size: 0.75rem; color: var(--tekst-muted); flex-wrap: wrap;
+        }
+        .legende-item { display: flex; align-items: center; gap: 5px; }
+        .legende-rute { width: 12px; height: 12px; border-radius: 3px; }
+        .valgt-periode {
+            background: var(--hover); padding: 10px 14px;
+            border-radius: 8px; margin-top: 12px; font-size: 0.9rem;
+        }
+        .valgt-periode .nullstill {
+            background: none; border: none; color: var(--primary);
+            cursor: pointer; font-size: 0.8rem; text-decoration: underline;
+            padding: 0; margin-left: 8px;
+        }
+        .ingen-valg {
+            text-align: center; color: var(--tekst-muted);
+            font-size: 0.85rem; padding: 12px;
+            background: var(--hover); border-radius: 8px; margin-top: 12px;
+        }
+
+        /* Prisliste-info under kalender */
+        .prismatrise {
+            margin-top: 14px; padding-top: 14px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+        .prismatrise-tittel { color: var(--tekst-muted); margin-bottom: 6px; font-weight: 600; }
+        .prismatrise-rad {
+            display: flex; justify-content: space-between;
+            padding: 2px 0; color: var(--text);
+        }
+        .prismatrise-rad .pris { color: var(--tekst-muted); }
+        .prismatrise-note {
+            font-size: 0.7rem; color: var(--tekst-muted); margin-top: 6px;
+        }
+
+        /* Skjema */
+        .field { margin-bottom: 14px; }
+        label.field-label {
+            display: block; font-weight: 500;
+            font-size: 0.85rem; margin-bottom: 5px;
+        }
+        input[type="text"], input[type="tel"], input[type="email"], textarea {
+            width: 100%; padding: 11px;
+            border: 1px solid var(--border); border-radius: 8px;
+            font-size: 0.95rem; font-family: inherit;
+        }
+        textarea { resize: vertical; min-height: 60px; }
+        input:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        /* Tillegg/transport-seksjoner */
+        .tillegg-seksjon {
+            margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .tillegg-punkt {
+            display: flex; gap: 10px;
+            padding: 10px; border-radius: 8px;
+            margin-bottom: 6px; cursor: pointer;
+            transition: background 0.1s;
+            border: 1px solid transparent;
+        }
+        .tillegg-punkt:hover { background: var(--hover); }
+        .tillegg-punkt.valgt { 
+            background: var(--range); 
+            border-color: var(--primary);
+        }
+        .tillegg-punkt input[type="checkbox"] {
+            margin-top: 2px; width: 18px; height: 18px;
+            flex-shrink: 0; cursor: pointer; accent-color: var(--primary);
+        }
+        .tillegg-tekst { flex: 1; font-size: 0.9rem; }
+        .tillegg-navn { font-weight: 500; display: block; }
+        .tillegg-pris { color: var(--tekst-muted); font-size: 0.8rem; }
+        .tillegg-pris strong { color: var(--text); }
+
+        /* Adresse-felt for transport */
+        .adresse-wrapper {
+            display: none; margin-top: 8px;
+            padding: 12px; background: var(--info);
+            border-left: 3px solid var(--info-border);
+            border-radius: 8px;
+        }
+        .adresse-wrapper.synlig { display: block; }
+        .adresse-info {
+            font-size: 0.8rem; color: var(--tekst-muted);
+            margin-top: 6px;
+        }
+
+        /* Ansvarspunkter */
+        .ansvar-seksjon {
+            margin-top: 16px; padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .ansvar-intro {
+            font-size: 0.85rem; color: var(--tekst-muted); margin-bottom: 12px;
+        }
+        .ansvar-punkt {
+            display: flex; gap: 10px; padding: 10px;
+            border-radius: 8px; margin-bottom: 6px;
+            cursor: pointer; transition: background 0.1s;
+        }
+        .ansvar-punkt:hover { background: var(--hover); }
+        .ansvar-punkt input[type="checkbox"] {
+            margin-top: 2px; width: 18px; height: 18px;
+            flex-shrink: 0; cursor: pointer; accent-color: var(--primary);
+        }
+        .ansvar-tekst { font-size: 0.85rem; line-height: 1.45; }
+        .ansvar-tittel { font-weight: 600; display: block; margin-bottom: 2px; }
+        .ansvar-detalj { color: var(--tekst-muted); }
+        .ansvar-link {
+            color: var(--primary); text-decoration: underline; cursor: pointer;
+        }
+
+        /* Pris-oppsummering */
+        .pris-boks {
+            background: #f0f0ec; padding: 14px;
+            border-radius: 8px; margin: 16px 0; font-size: 0.9rem;
+        }
+        .pris-rad {
+            display: flex; justify-content: space-between; padding: 3px 0;
+        }
+        .pris-rad.subrad {
+            font-size: 0.85rem; color: var(--tekst-muted); padding: 1px 0 1px 12px;
+        }
+        .pris-rad.skille {
+            border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px;
+        }
+        .pris-rad.mva {
+            font-size: 0.85rem; color: var(--tekst-muted);
+        }
+        .pris-rad.total {
+            font-weight: 700; font-size: 1.05rem;
+            border-top: 2px solid var(--text); margin-top: 6px; padding-top: 10px;
+        }
+        .pris-rad.depositum {
+            font-size: 0.8rem; color: var(--tekst-muted);
+            margin-top: 8px; padding-top: 8px;
+            border-top: 1px dashed var(--border);
+        }
+
+        button.primary {
+            width: 100%; padding: 14px;
+            background: var(--primary); color: white;
+            border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        button.primary:hover:not(:disabled) { background: var(--primary-mork); }
+        button.primary:disabled { background: #ccc; cursor: not-allowed; }
+
+        .melding {
+            padding: 11px; border-radius: 8px;
+            margin-bottom: 12px; font-size: 0.85rem;
+        }
+        .melding.feil { background: #fee; color: #c00; }
+        .melding.advarsel {
+            background: var(--advarsel);
+            border-left: 3px solid var(--advarsel-border);
+            color: #6b4d00;
+        }
+
+        .skjema-disabled { opacity: 0.5; pointer-events: none; }
+        .skjema-info {
+            text-align: center; color: var(--tekst-muted);
+            font-size: 0.9rem; padding: 30px 16px;
+            background: var(--hover); border-radius: 8px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.synlig { display: flex; }
+        .modal-innhold {
+            background: white; border-radius: 12px;
+            max-width: 600px; width: 100%; max-height: 80vh;
+            overflow-y: auto; padding: 24px;
+        }
+        .modal-tittel {
+            font-size: 1.2rem; font-weight: 600; margin-bottom: 12px;
+        }
+        .modal-body { font-size: 0.9rem; line-height: 1.6; }
+        .modal-body h3 { font-size: 1rem; margin: 16px 0 6px; color: var(--text); }
+        .modal-lukk {
+            margin-top: 16px; background: var(--text); color: white;
+            border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 12px 30px; }
+            .card { padding: 16px; }
+            .dag { font-size: 0.8rem; min-height: 32px; }
+            .maskin-info { font-size: 0.8rem; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="hero-tekst">
+            <h1>Lei Volvo EC20E</h1>
+            <p class="subtitle">2 tonns gravemaskin · Tiltfeste · Tre skuffer · Tromsø</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Maskininfo-stripe -->
+        <div class="maskin-info" id="maskinInfo">
+            <!-- Fylles dynamisk fra konfig -->
+        </div>
+
+        <div class="layout">
+            <!-- Venstre: Kalender + prisinfo -->
+            <div class="card kalender-card">
+                <h2>Velg periode</h2>
+                <div class="kalender-header">
+                    <button class="kalender-nav" id="forrigeMnd" onclick="endreMaaned(-1)" aria-label="Forrige måned">‹</button>
+                    <span class="maaned-label" id="maanedLabel"></span>
+                    <button class="kalender-nav" id="nesteMnd" onclick="endreMaaned(1)" aria-label="Neste måned">›</button>
+                </div>
+
+                <div class="ukedag-rad">
+                    <div class="ukedag">Ma</div><div class="ukedag">Ti</div>
+                    <div class="ukedag">On</div><div class="ukedag">To</div>
+                    <div class="ukedag">Fr</div><div class="ukedag">Lø</div>
+                    <div class="ukedag">Sø</div>
+                </div>
+
+                <div class="dager-grid" id="dagerGrid"></div>
+
+                <div class="legende">
+                    <div class="legende-item">
+                        <div class="legende-rute" style="background: white; border: 1px solid var(--border);"></div>
+                        <span>Ledig</span>
+                    </div>
+                    <div class="legende-item">
+                        <div class="legende-rute" style="background: var(--opptatt);"></div>
+                        <span>Opptatt</span>
+                    </div>
+                    <div class="legende-item">
+                        <div class="legende-rute" style="background: var(--valgt);"></div>
+                        <span>Valgt</span>
+                    </div>
+                </div>
+
+                <div class="valgt-periode" id="valgtPeriode" style="display:none;">
+                    <span id="valgtTekst"></span>
+                    <button class="nullstill" onclick="nullstillValg()">Nullstill</button>
+                </div>
+                <div class="ingen-valg" id="ingenValg">
+                    Klikk på datoer for å velge leieperiode
+                </div>
+
+                <!-- Prismatrise vises alltid -->
+                <div class="prismatrise" id="prismatrise"></div>
+            </div>
+
+            <!-- Høyre: Skjema -->
+            <div class="card" id="skjemaCard">
+                <h2>Dine opplysninger</h2>
+                <div id="melding"></div>
+
+                <div id="skjemaWrapper" class="skjema-disabled">
+                    <div class="field">
+                        <label class="field-label" for="kundeNavn">Fullt navn</label>
+                        <input type="text" id="kundeNavn" required placeholder="Ola Nordmann">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="kundeTelefon">Mobilnummer (Vipps)</label>
+                        <input type="tel" id="kundeTelefon" required placeholder="40000000" pattern="[0-9]{8}">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="kundeEpost">E-post</label>
+                        <input type="email" id="kundeEpost" required>
+                    </div>
+
+                    <!-- Tilleggsutstyr -->
+                    <div class="tillegg-seksjon">
+                        <h3>Tilleggsutstyr</h3>
+                        <div id="tilleggListe"></div>
+                    </div>
+
+                    <!-- Bringing/henting -->
+                    <div class="tillegg-seksjon">
+                        <h3>Bringing og henting</h3>
+                        <div class="ansvar-intro">
+                            Du kan hente selv på <strong id="hentAdresse">Bjørnøygata 42, Tromsø</strong> (krever BE-førerkort).
+                            Eller la meg bringe og/eller hente innenfor 30 km.
+                        </div>
+                        <div id="transportListe"></div>
+                        <div class="adresse-wrapper" id="adresseWrapper">
+                            <label class="field-label" for="transportAdresse">Adresse for bringing/henting</label>
+                            <textarea id="transportAdresse" placeholder="Gateadresse, postnummer, sted" oninput="oppdaterKnapp()"></textarea>
+                            <div class="adresse-info">
+                                Maks 30 km fra Tromsø. Lengre avstander må avtales på forhånd.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ansvarspunkter -->
+                    <div class="ansvar-seksjon">
+                        <h3>Ansvar og vilkår</h3>
+                        <div class="ansvar-intro">Du må bekrefte alle punktene under for å kunne booke:</div>
+
+                        <label class="ansvar-punkt">
+                            <input type="checkbox" id="ansvar1" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg er over 18 år og har erfaring med gravemaskin</span>
+                                <span class="ansvar-detalj">Maskinen krever ikke førerkort, men erfaring er påkrevd. Du må fremvise gyldig legitimasjon ved henting.</span>
+                            </div>
+                        </label>
+
+                        <label class="ansvar-punkt" id="ansvarBE" style="display:none;">
+                            <input type="checkbox" id="ansvar1b" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg har gyldig BE-førerkort for henger</span>
+                                <span class="ansvar-detalj">Tilhenger Brian James Digger Plant 2700 har 2 700 kg totalvekt og krever klasse BE. Vises kun hvis du henter selv.</span>
+                            </div>
+                        </label>
+
+                        <label class="ansvar-punkt">
+                            <input type="checkbox" id="ansvar2" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg er ansvarlig for skade på maskinen i leieperioden</span>
+                                <span class="ansvar-detalj">Egenandel inntil 5 000 kr (depositum). Større skader belastes etter takst. Bilder må tas ved henting og levering.</span>
+                            </div>
+                        </label>
+
+                        <label class="ansvar-punkt">
+                            <input type="checkbox" id="ansvar3" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg er ansvarlig for skade på tredjepart</span>
+                                <span class="ansvar-detalj">Inkluderer skade på personer, bygninger, kabler og rør. Ring Geomatikk på 09146 for kabelpåvisning før graving.</span>
+                            </div>
+                        </label>
+
+                        <label class="ansvar-punkt">
+                            <input type="checkbox" id="ansvar4" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg leverer tilbake i samme stand</span>
+                                <span class="ansvar-detalj">Maskinen skal leveres rengjort, med samme drivstoffnivå, og innen avtalt sluttid.</span>
+                            </div>
+                        </label>
+
+                        <label class="ansvar-punkt">
+                            <input type="checkbox" id="ansvar5" onchange="oppdaterKnapp()">
+                            <div class="ansvar-tekst">
+                                <span class="ansvar-tittel">Jeg godtar <span class="ansvar-link" onclick="visModal('vilkaar'); event.preventDefault();">leievilkår</span> og <span class="ansvar-link" onclick="visModal('personvern'); event.preventDefault();">personvernerklæring</span></span>
+                                <span class="ansvar-detalj">Inkluderer regler for avbestilling, depositum og bruk av personopplysninger.</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Pris-oppsummering -->
+                    <div class="pris-boks" id="prisBoks">
+                        <div id="prisInnhold">
+                            <!-- Fylles dynamisk -->
+                        </div>
+                    </div>
+
+                    <button class="primary" id="bookKnapp" onclick="opprettBooking()" disabled>
+                        Velg datoer og bekreft vilkår
+                    </button>
+                </div>
+
+                <div class="skjema-info" id="skjemaInfo">
+                    Velg leieperiode i kalenderen til venstre for å fortsette
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) lukkModal()">
+        <div class="modal-innhold">
+            <div id="modalInnhold"></div>
+            <button class="modal-lukk" onclick="lukkModal()">Lukk</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let visMaaned = new Date();
+        visMaaned.setDate(1);
+        let opptatteDatoer = new Set();
+        let valgtStart = null;
+        let valgtSlutt = null;
+        let konfig = null;
+        let aktivePris = null;
+        const idag = new Date();
+        idag.setHours(0, 0, 0, 0);
+
+        const maanedNavn = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 
+                            'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+
+        // Init
+        async function init() {
+            try {
+                const res = await fetch('/api/booking/konfig');
+                konfig = await res.json();
+                renderMaskinInfo();
+                renderTillegg();
+                renderTransport();
+                renderPrismatrise();
+            } catch (err) {
+                console.error('Kunne ikke laste konfig:', err);
+            }
+            await hentOpptatteDatoer();
+            oppdaterValgtVisning();
+        }
+
+        function formaterPris(eksMva) {
+            const inkMva = Math.round(eksMva * (1 + konfig.priser.mvaSats / 100));
+            return inkMva.toLocaleString('nb-NO') + ' kr';
+        }
+
+        function formaterPrisEksMva(beloep) {
+            return beloep.toLocaleString('nb-NO') + ' kr';
+        }
+
+        function renderMaskinInfo() {
+            const el = document.getElementById('maskinInfo');
+            const m = konfig.maskin;
+            el.innerHTML = `
+                <div class="maskin-info-rad">
+                    <span class="maskin-info-label">Maskin:</span>
+                    <span class="maskin-info-verdi">${m.navn}</span>
+                </div>
+                <div class="maskin-info-rad">
+                    <span class="maskin-info-label">Utstyr:</span>
+                    <span class="maskin-info-verdi">${m.utstyrInkludert.join(', ')}</span>
+                </div>
+                <div class="maskin-info-rad">
+                    <span class="maskin-info-label">Henger:</span>
+                    <span class="maskin-info-verdi">${m.tilhenger}</span>
+                </div>
+                <div class="maskin-info-rad">
+                    <span class="maskin-info-label">Sted:</span>
+                    <span class="maskin-info-verdi">${m.adresse}</span>
+                </div>
+            `;
+            document.getElementById('hentAdresse').textContent = m.adresse;
+        }
+
+        function renderTillegg() {
+            const el = document.getElementById('tilleggListe');
+            el.innerHTML = konfig.priser.tillegg.map(t => `
+                <label class="tillegg-punkt" data-tillegg="${t.id}">
+                    <input type="checkbox" id="tillegg-${t.id}" onchange="oppdaterValgtTillegg(this); beregnPris();">
+                    <div class="tillegg-tekst">
+                        <span class="tillegg-navn">${t.navn}</span>
+                        <span class="tillegg-pris"><strong>${formaterPrisEksMva(t.pris)}</strong>/døgn (eks mva)</span>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function renderTransport() {
+            const el = document.getElementById('transportListe');
+            el.innerHTML = konfig.priser.transport.map(t => `
+                <label class="tillegg-punkt" data-transport="${t.id}">
+                    <input type="checkbox" id="transport-${t.id}" onchange="oppdaterValgtTransport(this); beregnPris(); oppdaterAdresseFelt(); oppdaterBE();">
+                    <div class="tillegg-tekst">
+                        <span class="tillegg-navn">${t.navn}</span>
+                        <span class="tillegg-pris"><strong>${formaterPrisEksMva(t.pris)}</strong> per vei (eks mva)</span>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        function renderPrismatrise() {
+            const el = document.getElementById('prismatrise');
+            const linjer = konfig.priser.kategorier.map(k => `
+                <div class="prismatrise-rad">
+                    <span>${k.navn}</span>
+                    <span class="pris">${formaterPrisEksMva(k.pris)} eks mva</span>
+                </div>
+            `).join('');
+            el.innerHTML = `
+                <div class="prismatrise-tittel">Priser</div>
+                ${linjer}
+                <div class="prismatrise-rad">
+                    <span>Etter 7 dager</span>
+                    <span class="pris">${formaterPrisEksMva(konfig.priser.prisPerEkstraDag)}/dag eks mva</span>
+                </div>
+                <div class="prismatrise-note">Alle priser er eks. mva (${konfig.priser.mvaSats}%)</div>
+            `;
+        }
+
+        function oppdaterValgtTillegg(checkbox) {
+            const punkt = checkbox.closest('.tillegg-punkt');
+            punkt.classList.toggle('valgt', checkbox.checked);
+        }
+
+        function oppdaterValgtTransport(checkbox) {
+            const punkt = checkbox.closest('.tillegg-punkt');
+            punkt.classList.toggle('valgt', checkbox.checked);
+        }
+
+        function oppdaterAdresseFelt() {
+            const valgtTransport = harValgtTransport();
+            const wrapper = document.getElementById('adresseWrapper');
+            wrapper.classList.toggle('synlig', valgtTransport);
+        }
+
+        function oppdaterBE() {
+            // Hvis kunde IKKE bestiller bringing+henting, må de ha BE-førerkort
+            const harBegge = document.getElementById('transport-bringing').checked &&
+                             document.getElementById('transport-henting').checked;
+            const beElement = document.getElementById('ansvarBE');
+            beElement.style.display = harBegge ? 'none' : 'flex';
+            // Hvis BE skjules, fjern hake så det ikke blokkerer knappen
+            if (harBegge) {
+                document.getElementById('ansvar1b').checked = false;
+            }
+            oppdaterKnapp();
+        }
+
+        function harValgtTransport() {
+            return [...document.querySelectorAll('[id^="transport-"]')].some(c => c.checked);
+        }
+
+        function valgteTillegg() {
+            return [...document.querySelectorAll('[id^="tillegg-"]')]
+                .filter(c => c.checked)
+                .map(c => c.id.replace('tillegg-', ''));
+        }
+
+        function valgteTransport() {
+            return [...document.querySelectorAll('[id^="transport-"]')]
+                .filter(c => c.checked)
+                .map(c => c.id.replace('transport-', ''));
+        }
+
+        async function beregnPris() {
+            if (!valgtStart || !valgtSlutt) return;
+            const dager = Math.round((valgtSlutt - valgtStart) / 86400000) + 1;
+            try {
+                const res = await fetch('/api/booking/beregn-pris', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        antallDager: dager, 
+                        tilleggIds: valgteTillegg(),
+                        transportIds: valgteTransport()
+                    })
+                });
+                aktivePris = await res.json();
+                renderPrisOversikt();
+            } catch (err) {
+                console.error('Prisberegning feilet:', err);
+            }
+        }
+
+        function renderPrisOversikt() {
+            if (!aktivePris) return;
+            const p = aktivePris;
+            const el = document.getElementById('prisInnhold');
+            
+            let html = `
+                <div class="pris-rad">
+                    <span>${p.leie.navn}</span>
+                    <span>${formaterPrisEksMva(p.leie.pris)}</span>
+                </div>
+            `;
+            
+            if (p.tillegg.length || p.transport.length) {
+                [...p.tillegg, ...p.transport].forEach(linje => {
+                    html += `
+                        <div class="pris-rad subrad">
+                            <span>+ ${linje.navn}</span>
+                            <span>${formaterPrisEksMva(linje.pris)}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `
+                <div class="pris-rad skille">
+                    <span>Sum eks mva</span>
+                    <span>${formaterPrisEksMva(p.sumEksMva)}</span>
+                </div>
+                <div class="pris-rad mva">
+                    <span>Mva ${p.mvaSats}%</span>
+                    <span>${formaterPrisEksMva(p.mvaBeloep)}</span>
+                </div>
+                <div class="pris-rad total">
+                    <span>Total å betale</span>
+                    <span>${formaterPrisEksMva(p.sumInkMva)}</span>
+                </div>
+                <div class="pris-rad depositum">
+                    <span>+ Depositum (reserveres ved henting)</span>
+                    <span>${formaterPrisEksMva(p.depositumInkMva)}</span>
+                </div>
+            `;
+            el.innerHTML = html;
+        }
+
+        async function hentOpptatteDatoer() {
+            try {
+                const fra = idag.toISOString().split('T')[0];
+                const til = new Date(idag);
+                til.setMonth(til.getMonth() + 12);
+                const res = await fetch(`/api/booking/opptatte-datoer?fra=${fra}&til=${til.toISOString().split('T')[0]}`);
+                const data = await res.json();
+                opptatteDatoer = new Set(data.opptatteDatoer);
+            } catch (err) {
+                console.error('Kunne ikke hente opptatte datoer:', err);
+            }
+            tegnKalender();
+        }
+
+        function datoTilStreng(dato) {
+            const y = dato.getFullYear();
+            const m = String(dato.getMonth() + 1).padStart(2, '0');
+            const d = String(dato.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function erOpptatt(dato) { return opptatteDatoer.has(datoTilStreng(dato)); }
+        function erFortid(dato) { return dato < idag; }
+
+        function rangeHarOpptatt(start, slutt) {
+            const d = new Date(start);
+            while (d <= slutt) {
+                if (erOpptatt(d)) return true;
+                d.setDate(d.getDate() + 1);
+            }
+            return false;
+        }
+
+        function tegnKalender() {
+            const grid = document.getElementById('dagerGrid');
+            grid.innerHTML = '';
+            const aar = visMaaned.getFullYear();
+            const mnd = visMaaned.getMonth();
+            document.getElementById('maanedLabel').textContent = `${maanedNavn[mnd]} ${aar}`;
+
+            const naaMaaned = new Date();
+            naaMaaned.setDate(1);
+            naaMaaned.setHours(0, 0, 0, 0);
+            document.getElementById('forrigeMnd').disabled = visMaaned <= naaMaaned;
+
+            const foersteDag = new Date(aar, mnd, 1);
+            let starUkedag = foersteDag.getDay() - 1;
+            if (starUkedag < 0) starUkedag = 6;
+
+            for (let i = 0; i < starUkedag; i++) {
+                const tom = document.createElement('div');
+                tom.className = 'dag tom';
+                grid.appendChild(tom);
+            }
+
+            const dagerIMaaned = new Date(aar, mnd + 1, 0).getDate();
+            for (let d = 1; d <= dagerIMaaned; d++) {
+                const dato = new Date(aar, mnd, d);
+                const celle = document.createElement('div');
+                celle.className = 'dag';
+                celle.textContent = d;
+
+                if (dato.getTime() === idag.getTime()) celle.classList.add('idag');
+
+                if (erFortid(dato)) {
+                    celle.classList.add('fortid');
+                } else if (erOpptatt(dato)) {
+                    celle.classList.add('opptatt');
+                    celle.title = 'Opptatt';
+                } else {
+                    celle.addEventListener('click', () => velgDato(dato));
+                }
+
+                if (valgtStart && valgtSlutt) {
+                    if (dato.getTime() === valgtStart.getTime() || dato.getTime() === valgtSlutt.getTime()) {
+                        celle.classList.add('valgt');
+                    } else if (dato > valgtStart && dato < valgtSlutt) {
+                        celle.classList.add('range');
+                    }
+                } else if (valgtStart && dato.getTime() === valgtStart.getTime()) {
+                    celle.classList.add('valgt');
+                }
+
+                grid.appendChild(celle);
+            }
+        }
+
+        function velgDato(dato) {
+            if (!valgtStart || (valgtStart && valgtSlutt)) {
+                valgtStart = dato;
+                valgtSlutt = null;
+                visMelding('', '');
+            } else {
+                if (dato < valgtStart) {
+                    valgtStart = dato;
+                    valgtSlutt = null;
+                } else if (dato.getTime() === valgtStart.getTime()) {
+                    valgtSlutt = dato;
+                } else {
+                    if (rangeHarOpptatt(valgtStart, dato)) {
+                        visMelding('Den valgte perioden krysser en opptatt dag. Velg en annen periode.', 'feil');
+                        valgtStart = dato;
+                        valgtSlutt = null;
+                    } else {
+                        valgtSlutt = dato;
+                        visMelding('', '');
+                    }
+                }
+            }
+            tegnKalender();
+            oppdaterValgtVisning();
+            beregnPris();
+            oppdaterKnapp();
+        }
+
+        function nullstillValg() {
+            valgtStart = null;
+            valgtSlutt = null;
+            tegnKalender();
+            oppdaterValgtVisning();
+            oppdaterKnapp();
+        }
+
+        function formaterDato(dato) {
+            return `${dato.getDate()}. ${maanedNavn[dato.getMonth()]}`;
+        }
+
+        function oppdaterValgtVisning() {
+            const periode = document.getElementById('valgtPeriode');
+            const ingen = document.getElementById('ingenValg');
+            const tekst = document.getElementById('valgtTekst');
+            const wrapper = document.getElementById('skjemaWrapper');
+            const info = document.getElementById('skjemaInfo');
+
+            if (valgtStart && valgtSlutt) {
+                const dager = Math.round((valgtSlutt - valgtStart) / 86400000) + 1;
+                tekst.innerHTML = `<strong>${formaterDato(valgtStart)} – ${formaterDato(valgtSlutt)}</strong> (${dager} dag${dager > 1 ? 'er' : ''})`;
+                periode.style.display = 'block';
+                ingen.style.display = 'none';
+                wrapper.classList.remove('skjema-disabled');
+                info.style.display = 'none';
+            } else if (valgtStart) {
+                tekst.innerHTML = `<strong>Start:</strong> ${formaterDato(valgtStart)} – velg sluttdato`;
+                periode.style.display = 'block';
+                ingen.style.display = 'none';
+                wrapper.classList.add('skjema-disabled');
+                info.style.display = 'block';
+            } else {
+                periode.style.display = 'none';
+                ingen.style.display = 'block';
+                wrapper.classList.add('skjema-disabled');
+                info.style.display = 'block';
+            }
+        }
+
+        function oppdaterKnapp() {
+            const knapp = document.getElementById('bookKnapp');
+            const harDatoer = valgtStart && valgtSlutt;
+            
+            // Sjekk alle synlige ansvarspunkter
+            const ansvarsPunkter = ['ansvar1', 'ansvar2', 'ansvar3', 'ansvar4', 'ansvar5'];
+            const beSynlig = document.getElementById('ansvarBE').style.display !== 'none';
+            if (beSynlig) ansvarsPunkter.push('ansvar1b');
+            
+            const alleAnsvar = ansvarsPunkter.every(id => document.getElementById(id)?.checked);
+            
+            // Hvis transport valgt, må adresse fylles ut
+            const trengerAdresse = harValgtTransport();
+            const harAdresse = !trengerAdresse || document.getElementById('transportAdresse').value.trim().length > 5;
+            
+            if (!harDatoer) {
+                knapp.textContent = 'Velg datoer i kalenderen';
+                knapp.disabled = true;
+            } else if (!alleAnsvar) {
+                knapp.textContent = 'Bekreft alle vilkår for å fortsette';
+                knapp.disabled = true;
+            } else if (!harAdresse) {
+                knapp.textContent = 'Fyll inn adresse for bringing/henting';
+                knapp.disabled = true;
+            } else {
+                knapp.textContent = 'Book og betal med Vipps';
+                knapp.disabled = false;
+            }
+        }
+
+        function endreMaaned(diff) {
+            visMaaned.setMonth(visMaaned.getMonth() + diff);
+            tegnKalender();
+        }
+
+        function visMelding(tekst, type) {
+            const el = document.getElementById('melding');
+            if (!tekst) { el.innerHTML = ''; return; }
+            el.innerHTML = `<div class="melding ${type}">${tekst}</div>`;
+        }
+
+        function visModal(type) {
+            const innhold = document.getElementById('modalInnhold');
+            if (type === 'vilkaar') {
+                innhold.innerHTML = `
+                    <div class="modal-tittel">Leievilkår</div>
+                    <div class="modal-body">
+                        <h3>1. Booking og betaling</h3>
+                        <p>Booking er bindende ved gjennomført Vipps-betaling. Depositum på 5 000 kr (eks mva) reserveres ved henting og frigis etter retur dersom ingen skader oppdages.</p>
+                        <h3>2. Avbestilling</h3>
+                        <p>Avbestilling mer enn 48 timer før leiestart: full refusjon. 24-48 timer før: 50% refusjon. Mindre enn 24 timer: ingen refusjon.</p>
+                        <h3>3. Henting og levering</h3>
+                        <p>Maskinen kan hentes fra kl 08:00 på leiestartdato og må leveres tilbake innen kl 20:00 på sluttdato. Forsinket levering belastes med full dagleie.</p>
+                        <h3>4. Tilhenger og førerkort</h3>
+                        <p>Tilhenger Brian James Digger Plant 2700 har 2 700 kg totalvekt. Klasse BE-førerkort kreves for å trekke selv. Ved bringing/henting tar utleier ansvar for transport.</p>
+                        <h3>5. Bilder ved henting og levering</h3>
+                        <p>Det skal tas bilder av maskinen fra alle sider ved både henting og levering. Disse brukes til skadevurdering. Manglende bilder kan medføre at hele depositum belastes.</p>
+                        <h3>6. Bruksområde</h3>
+                        <p>Maskinen skal kun benyttes til normalt gravearbeid. Bruk i sjø/vann, sprengning, eller annen ekstrem belastning er ikke tillatt.</p>
+                        <h3>7. Skader og forsikring</h3>
+                        <p>Leietaker er ansvarlig for alle skader i leieperioden. Egenandel inntil depositum (5 000 kr eks mva). Større skader belastes etter takst.</p>
+                        <h3>8. Tvist</h3>
+                        <p>Eventuelle tvister behandles etter norsk rett ved Nord-Troms tingrett.</p>
+                    </div>`;
+            } else {
+                innhold.innerHTML = `
+                    <div class="modal-tittel">Personvernerklæring</div>
+                    <div class="modal-body">
+                        <h3>Hvilke opplysninger samler vi inn?</h3>
+                        <p>Navn, mobilnummer, e-post, leieperiode, og evt. adresse for bringing/henting. Mobilnummer brukes for utsending av låskode og kommunikasjon under leieperioden.</p>
+                        <h3>Hvor lenge lagres opplysningene?</h3>
+                        <p>Bookingdata lagres i 5 år av regnskapsmessige hensyn (jf. bokføringsloven). Etter dette slettes personopplysninger.</p>
+                        <h3>Hvem deler vi data med?</h3>
+                        <p>Vipps (for betaling), iglohome (for låskode), SMS-leverandør (for utsending av kode). Vi deler ikke data med tredjepart for markedsføring.</p>
+                        <h3>Dine rettigheter</h3>
+                        <p>Du har rett til innsyn, retting og sletting av dine opplysninger. Kontakt oss for å utøve disse rettighetene.</p>
+                    </div>`;
+            }
+            document.getElementById('modalOverlay').classList.add('synlig');
+        }
+
+        function lukkModal() {
+            document.getElementById('modalOverlay').classList.remove('synlig');
+        }
+
+        async function opprettBooking() {
+            if (!valgtStart || !valgtSlutt) return;
+            
+            const data = {
+                kundeNavn: document.getElementById('kundeNavn').value.trim(),
+                kundeTelefon: document.getElementById('kundeTelefon').value.trim(),
+                kundeEpost: document.getElementById('kundeEpost').value.trim(),
+                startDato: datoTilStreng(valgtStart),
+                sluttDato: datoTilStreng(valgtSlutt),
+                tilleggIds: valgteTillegg(),
+                transportIds: valgteTransport(),
+                transportAdresse: document.getElementById('transportAdresse').value.trim() || null,
+                ansvarBekreftet: true,
+                ansvarTidspunkt: new Date().toISOString()
+            };
+
+            for (const k of ['kundeNavn','kundeTelefon','kundeEpost']) {
+                if (!data[k]) { visMelding(`Fyll ut: ${k}`, 'feil'); return; }
+            }
+
+            const knapp = document.getElementById('bookKnapp');
+            knapp.disabled = true;
+            knapp.textContent = 'Oppretter...';
+
+            try {
+                const res = await fetch('/api/booking/opprett', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const resultat = await res.json();
+                
+                if (!res.ok) {
+                    visMelding(resultat.feil || 'Noe gikk galt', 'feil');
+                    oppdaterKnapp();
+                    hentOpptatteDatoer();
+                    return;
+                }
+                window.location.href = resultat.betalingsUrl;
+            } catch (err) {
+                visMelding('Nettverksfeil: ' + err.message, 'feil');
+                oppdaterKnapp();
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

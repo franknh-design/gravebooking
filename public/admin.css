@@ -1,0 +1,391 @@
+/* public/admin.css - Stil for admin-panel */
+:root {
+    --primary: #ff5b24;
+    --primary-mork: #e04a18;
+    --bg: #f4f4f2;
+    --text: #1a1a1a;
+    --tekst-muted: #666;
+    --border: #e0e0e0;
+    --hover: #ebebe7;
+    --success: #2d7a3a;
+    --success-bg: #e8f5ea;
+    --warning: #b8860b;
+    --warning-bg: #fff7d6;
+    --feil: #c00;
+    --feil-bg: #fee;
+    --info: #1c5fa8;
+    --info-bg: #e8f1fa;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* Login */
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+.login-boks {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    max-width: 400px;
+    width: 100%;
+}
+.login-boks h1 { margin-bottom: 8px; }
+.login-boks p { color: var(--tekst-muted); margin-bottom: 16px; font-size: 0.9rem; }
+.login-boks input {
+    width: 100%; padding: 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 1rem; margin-bottom: 12px;
+    font-family: monospace;
+}
+.login-boks button {
+    width: 100%; padding: 12px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+.login-feil {
+    color: var(--feil) !important; margin-top: 10px !important;
+    margin-bottom: 0 !important; font-size: 0.85rem !important;
+}
+
+/* Topbar */
+.topbar {
+    background: white;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky; top: 0; z-index: 50;
+}
+.topbar h1 { font-size: 1.1rem; }
+.topbar-actions { display: flex; gap: 12px; align-items: center; }
+.btn-tekst {
+    background: none; border: none;
+    color: var(--info); cursor: pointer;
+    font-size: 0.9rem; text-decoration: none;
+    padding: 6px 10px; border-radius: 6px;
+}
+.btn-tekst:hover { background: var(--hover); }
+
+/* Statistikk */
+.statistikk-rad {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    padding: 16px 20px 0;
+}
+.stat-kort {
+    background: white;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.stat-tall {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.stat-tall.warning { color: var(--warning); }
+.stat-tall.success { color: var(--success); }
+.stat-tall.info { color: var(--info); }
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--tekst-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Filter */
+.filter-rad {
+    display: flex;
+    gap: 6px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
+.filter-knapp {
+    background: white;
+    border: 1px solid var(--border);
+    padding: 7px 13px;
+    border-radius: 18px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.filter-knapp:hover { background: var(--hover); }
+.filter-knapp.aktiv {
+    background: var(--text);
+    color: white;
+    border-color: var(--text);
+}
+
+/* Bookingliste */
+#bookingListe { padding: 0 20px 20px; }
+.booking-rad {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.1s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+.booking-rad:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.booking-info { min-width: 0; }
+.booking-tittel {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.booking-meta {
+    font-size: 0.8rem;
+    color: var(--tekst-muted);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.booking-meta-item { white-space: nowrap; }
+.booking-pris {
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.status-pille {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.status-venter_betaling { background: var(--hover); color: var(--tekst-muted); }
+.status-venter_godkjenning { background: var(--warning-bg); color: var(--warning); }
+.status-godkjent { background: var(--info-bg); color: var(--info); }
+.status-aktiv { background: var(--success-bg); color: var(--success); }
+.status-venter_godkjenning_retur { background: var(--warning-bg); color: var(--warning); }
+.status-fullfoert { background: var(--hover); color: var(--tekst-muted); }
+.status-avbrutt { background: var(--feil-bg); color: var(--feil); }
+.status-skade_registrert { background: var(--feil-bg); color: var(--feil); }
+
+/* Detaljmodal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+.modal-overlay.synlig { display: flex; }
+.modal-innhold {
+    background: white;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 100%;
+    padding: 24px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+.detalj-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+.detalj-tittel { font-size: 1.2rem; font-weight: 600; }
+.lukk-btn {
+    background: none; border: none;
+    font-size: 1.5rem; cursor: pointer;
+    color: var(--tekst-muted);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+}
+.lukk-btn:hover { background: var(--hover); }
+
+.detalj-seksjon { margin-bottom: 20px; }
+.detalj-seksjon h3 {
+    font-size: 0.85rem;
+    color: var(--tekst-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.detalj-rad {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 0.9rem;
+}
+.detalj-rad .label { color: var(--tekst-muted); }
+.detalj-rad .verdi { font-weight: 500; }
+.detalj-rad a { color: var(--info); }
+
+.notater-boks {
+    background: var(--bg);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    font-family: monospace;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Bildesammenligning */
+.bilder-sammenligning {
+    display: grid;
+    gap: 16px;
+}
+.kategori-sammenligning {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px;
+}
+.kategori-tittel {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+.bilde-par {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.bilde-celle {
+    text-align: center;
+}
+.bilde-celle img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    background: white;
+    border: 1px solid var(--border);
+}
+.bilde-celle img:hover { border-color: var(--primary); }
+.bilde-celle.mangler {
+    background: white;
+    aspect-ratio: 1;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tekst-muted);
+    font-size: 0.8rem;
+}
+.bilde-tag {
+    font-size: 0.75rem;
+    color: var(--tekst-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Action-knapper */
+.actions-rad {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.action-btn {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+    min-width: 130px;
+}
+.action-btn.primary { background: var(--primary); color: white; }
+.action-btn.primary:hover { background: var(--primary-mork); }
+.action-btn.success { background: var(--success); color: white; }
+.action-btn.warning { background: var(--warning); color: white; }
+.action-btn.danger { background: var(--feil); color: white; }
+.action-btn.tekst {
+    background: white;
+    border: 1px solid var(--border);
+    color: var(--text);
+    flex: 0 0 auto;
+}
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Lightbox */
+.lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    flex-direction: column;
+}
+.lightbox.synlig { display: flex; }
+.lightbox img {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+}
+.lightbox-tekst {
+    color: white;
+    margin-top: 12px;
+    font-size: 0.9rem;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .topbar { padding: 12px 14px; }
+    .statistikk-rad { padding: 12px 14px 0; }
+    .filter-rad { padding: 12px 14px; }
+    #bookingListe { padding: 0 14px 14px; }
+    .modal-innhold { padding: 16px; }
+    .detalj-rad { grid-template-columns: 110px 1fr; font-size: 0.85rem; }
+    .booking-rad { padding: 12px; }
+    .booking-tittel { font-size: 0.9rem; }
+    .actions-rad .action-btn { min-width: 100%; flex: 1 1 100%; }
+}

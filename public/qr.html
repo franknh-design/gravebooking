@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-kode for maskin</title>
+    <link rel="stylesheet" href="/admin.css">
+    <style>
+        .qr-side { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .qr-side h1 { margin-bottom: 8px; }
+        .qr-intro { color: var(--tekst-muted); margin-bottom: 20px; font-size: 0.95rem; }
+        
+        .qr-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 700px) {
+            .qr-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .qr-konfig, .qr-forhandsvisning {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .felt { margin-bottom: 14px; }
+        .felt label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .felt input, .felt select, .felt textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .felt textarea { resize: vertical; min-height: 50px; }
+
+        /* Forhåndsvisning av klistrelapp */
+        .lapp {
+            background: white;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+        .lapp-tittel {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .lapp-undertittel {
+            font-size: 0.85rem;
+            color: var(--tekst-muted);
+            margin-bottom: 14px;
+        }
+        .lapp canvas {
+            display: block;
+            margin: 0 auto 12px;
+            border: 1px solid var(--border);
+        }
+        .lapp-instr {
+            font-size: 0.85rem;
+            color: var(--tekst-muted);
+            margin-top: 8px;
+        }
+        .lapp-kontakt {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .knapp-rad {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-primary, .btn-sekundær {
+            padding: 11px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            min-width: 120px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-mork); }
+        .btn-sekundær {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-sekundær:hover { background: var(--hover); }
+
+        .melding-info {
+            background: var(--info-bg);
+            border-left: 3px solid var(--info);
+            color: var(--info);
+            padding: 11px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+        }
+
+        /* Utskriftsoptimalisering */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .topbar, .qr-konfig, .knapp-rad, h1, .qr-intro, .melding-info { display: none !important; }
+            .qr-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+            .qr-forhandsvisning { 
+                border: none; 
+                padding: 0; 
+                box-shadow: none;
+            }
+            .lapp { 
+                border: 2px dashed #999; 
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <h1>Gravebooking Admin</h1>
+        <div class="topbar-actions">
+            <a href="/admin.html" class="btn-tekst">← Tilbake til admin</a>
+        </div>
+    </header>
+
+    <div class="qr-side">
+        <h1>QR-kode for klistrelapp</h1>
+        <p class="qr-intro">Generer en QR-kode som peker til info-siden. Skriv ut, laminer og fest på maskinen.</p>
+
+        <div class="melding-info">
+            <strong>Tips:</strong> QR-koden peker bare til en informasjonsside. Den gir ingen tilgang til booking-systemet, kundedata eller andre sensitive deler. Kan trygt skannes av forbipasserende.
+        </div>
+
+        <div class="qr-grid">
+            <div class="qr-konfig">
+                <h3 style="font-size: 1rem; margin-bottom: 14px;">Innstillinger</h3>
+
+                <div class="felt">
+                    <label>URL koden peker til</label>
+                    <input type="url" id="urlInput" placeholder="https://din-server.no/info.html">
+                </div>
+
+                <div class="felt">
+                    <label>Tittel på lappen</label>
+                    <input type="text" id="tittelInput" value="Volvo EC20E">
+                </div>
+
+                <div class="felt">
+                    <label>Undertittel</label>
+                    <input type="text" id="undertittelInput" value="Skann for info og hjelp">
+                </div>
+
+                <div class="felt">
+                    <label>Kontaktinfo nederst</label>
+                    <input type="text" id="kontaktInput" placeholder="Spørsmål: 91234567">
+                </div>
+
+                <div class="felt">
+                    <label>QR-størrelse (px)</label>
+                    <select id="storelseInput">
+                        <option value="200">Liten (200x200)</option>
+                        <option value="280" selected>Medium (280x280)</option>
+                        <option value="360">Stor (360x360)</option>
+                        <option value="450">Ekstra stor (450x450)</option>
+                    </select>
+                </div>
+
+                <button class="btn-primary" onclick="oppdater()">Generer på nytt</button>
+            </div>
+
+            <div class="qr-forhandsvisning">
+                <h3 style="font-size: 1rem; margin-bottom: 14px;">Forhåndsvisning</h3>
+                <div class="lapp" id="lapp">
+                    <div class="lapp-tittel" id="lappTittel">Volvo EC20E</div>
+                    <div class="lapp-undertittel" id="lappUndertittel">Skann for info og hjelp</div>
+                    <canvas id="qrCanvas"></canvas>
+                    <div class="lapp-instr">Skann med kameraet på telefonen</div>
+                    <div class="lapp-kontakt" id="lappKontakt"></div>
+                </div>
+
+                <div class="knapp-rad">
+                    <button class="btn-primary" onclick="window.print()">Skriv ut</button>
+                    <button class="btn-sekundær" onclick="lastNed()">Last ned PNG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR-bibliotek (qrcode.js, ~5KB) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <script>
+        function settStandardUrl() {
+            const baseUrl = window.location.origin;
+            document.getElementById('urlInput').value = baseUrl + '/info.html';
+        }
+
+        async function lastKontakt() {
+            try {
+                const res = await fetch('/api/info/kontakt');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.telefon) {
+                        document.getElementById('kontaktInput').value = `Spørsmål: ${data.telefon}`;
+                    }
+                }
+            } catch (e) { /* */ }
+        }
+
+        async function oppdater() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url) {
+                alert('Sett URL først');
+                return;
+            }
+            const tittel = document.getElementById('tittelInput').value;
+            const undertittel = document.getElementById('undertittelInput').value;
+            const kontakt = document.getElementById('kontaktInput').value;
+            const storelse = parseInt(document.getElementById('storelseInput').value);
+
+            document.getElementById('lappTittel').textContent = tittel;
+            document.getElementById('lappUndertittel').textContent = undertittel;
+            document.getElementById('lappKontakt').textContent = kontakt;
+
+            const canvas = document.getElementById('qrCanvas');
+            try {
+                await QRCode.toCanvas(canvas, url, {
+                    width: storelse,
+                    margin: 2,
+                    errorCorrectionLevel: 'M',
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                });
+            } catch (err) {
+                alert('Feil ved generering: ' + err.message);
+            }
+        }
+
+        function lastNed() {
+            const canvas = document.getElementById('qrCanvas');
+            const lenke = document.createElement('a');
+            lenke.download = 'qr-volvo-ec20e.png';
+            lenke.href = canvas.toDataURL('image/png');
+            lenke.click();
+        }
+
+        // Init
+        settStandardUrl();
+        lastKontakt().then(() => oppdater());
+    </script>
+</body>
+</html>

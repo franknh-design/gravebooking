@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOCK Vipps - Betal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        body {
+            background: #ff5b24;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        .boks {
+            background: white;
+            color: #1a1a1a;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        .merknad {
+            background: #fff7d6;
+            border-left: 4px solid #f5c542;
+            color: #6b4d00;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 1.4rem; margin-bottom: 8px; }
+        .info { color: #666; margin-bottom: 20px; }
+        .beloep-boks {
+            background: #f7f7f5;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .beloep-label { font-size: 0.8rem; color: #666; }
+        .beloep { font-size: 2rem; font-weight: 700; }
+        .ordre { font-size: 0.75rem; color: #666; font-family: monospace; word-break: break-all; }
+        .knapp {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-family: inherit;
+        }
+        .godta { background: #2d7a3a; color: white; }
+        .avvis { background: #f7f7f5; color: #c00; }
+        .nedteller { font-size: 0.85rem; color: #666; text-align: center; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="boks">
+        <div class="merknad">
+            🧪 <strong>Mock-modus</strong> – dette er en simulering av Vipps. I produksjon vil kunden bli sendt til ekte Vipps-betaling.
+        </div>
+
+        <h1>Bekreft betaling</h1>
+        <p class="info">Simulert Vipps-betaling for å teste flyten lokalt</p>
+
+        <div class="beloep-boks">
+            <div class="beloep-label">Beløp</div>
+            <div class="beloep" id="beloepTekst">– kr</div>
+            <div class="ordre" id="ordreTekst">–</div>
+        </div>
+
+        <button class="knapp godta" onclick="godta()">✓ Godkjenn betaling</button>
+        <button class="knapp avvis" onclick="avvis()">✗ Avvis betaling</button>
+
+        <div class="nedteller" id="nedteller"></div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const ordreId = params.get('ordre');
+        const beloep = parseInt(params.get('beloep'));
+
+        document.getElementById('beloepTekst').textContent = beloep.toLocaleString('nb-NO') + ' kr';
+        document.getElementById('ordreTekst').textContent = ordreId;
+
+        async function godta() {
+            const knapper = document.querySelectorAll('.knapp');
+            knapper.forEach(b => b.disabled = true);
+            document.getElementById('nedteller').textContent = 'Sender bekreftelse...';
+
+            try {
+                // Kall callback for å markere som betalt
+                const res = await fetch(`/api/booking/vipps-callback/${ordreId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transactionInfo: {
+                            transactionId: `MOCK-${Date.now()}`,
+                            status: 'RESERVED'
+                        }
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('nedteller').textContent = '✓ Betalt! Sender deg tilbake...';
+                    setTimeout(() => {
+                        window.location.href = '/?betalt=' + ordreId;
+                    }, 1500);
+                } else {
+                    document.getElementById('nedteller').textContent = 'Feil: kunne ikke bekrefte';
+                    knapper.forEach(b => b.disabled = false);
+                }
+            } catch (err) {
+                document.getElementById('nedteller').textContent = 'Nettverksfeil: ' + err.message;
+                knapper.forEach(b => b.disabled = false);
+            }
+        }
+
+        function avvis() {
+            window.location.href = '/?avbrutt=' + ordreId;
+        }
+    </script>
+</body>
+</html>
