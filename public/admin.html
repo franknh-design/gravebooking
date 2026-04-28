@@ -54,6 +54,37 @@
         </div>
     </div>
 
+    <!-- Blokker datoer modal -->
+    <div class="modal-overlay" id="blokkerModal" onclick="if(event.target===this) lukkBlokker()">
+        <div class="modal-innhold blokker-modal">
+            <div class="detalj-header">
+                <div class="detalj-tittel">Blokker datoer</div>
+                <button class="lukk-btn" onclick="lukkBlokker()">×</button>
+            </div>
+            <p style="color: var(--tekst-muted); font-size: 0.9rem; margin-bottom: 16px;">
+                Velg datoer du vil blokkere for egen bruk, vedlikehold eller andre formål. 
+                Datoene blir utilgjengelige for kunder.
+            </p>
+
+            <div id="blokkerKalender" class="blokker-kalender"></div>
+
+            <div class="blokker-info" id="blokkerValgInfo" style="display: none;">
+                <div><strong>Valgt periode:</strong> <span id="blokkerPeriodeTekst"></span></div>
+            </div>
+
+            <div class="felt" style="margin-top: 14px;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px;">Grunn (valgfritt)</label>
+                <input type="text" id="blokkerGrunn" placeholder="F.eks. Egen bruk, Service, Vedlikehold" 
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem;">
+            </div>
+
+            <div class="actions-rad" style="margin-top: 14px;">
+                <button class="action-btn primary" onclick="bekreftBlokker()" id="bekreftBlokkerBtn" disabled>Blokker datoer</button>
+                <button class="action-btn tekst" onclick="lukkBlokker()">Avbryt</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bilde-lightbox -->
     <div class="lightbox" id="lightbox" onclick="lukkLightbox()">
         <img id="lightboxBilde" alt="">

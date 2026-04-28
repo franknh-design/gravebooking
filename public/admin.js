@@ -366,35 +366,194 @@
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
-    // ----- Blokker datoer -----
-    window.visBlokker = function() {
-        const startDato = prompt('Fra dato (format: YYYY-MM-DD, f.eks. 2026-05-15):');
-        if (!startDato) return;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(startDato)) {
-            alert('Ugyldig format. Bruk YYYY-MM-DD');
-            return;
+    // ----- Blokker datoer (med kalender) -----
+    let blokkerVisMaaned = new Date();
+    let blokkerStart = null;
+    let blokkerSlutt = null;
+    let blokkerOpptatte = new Set();
+
+    function formaterNorskDato(iso) {
+        const [y, m, d] = iso.split('-');
+        const maaneder = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+        return `${parseInt(d)}. ${maaneder[parseInt(m)-1]} ${y}`;
+    }
+
+    function isoDato(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    window.visBlokker = async function() {
+        blokkerStart = null;
+        blokkerSlutt = null;
+        blokkerVisMaaned = new Date();
+        document.getElementById('blokkerGrunn').value = '';
+        document.getElementById('blokkerValgInfo').style.display = 'none';
+        document.getElementById('bekreftBlokkerBtn').disabled = true;
+
+        // Hent opptatte datoer (eksisterende bookinger)
+        try {
+            const fra = isoDato(new Date());
+            const til = new Date();
+            til.setMonth(til.getMonth() + 12);
+            const tilStr = isoDato(til);
+            const res = await fetch(`/api/booking/opptatte-datoer?fra=${fra}&til=${tilStr}`);
+            const data = await res.json();
+            blokkerOpptatte = new Set(data.opptatte || []);
+        } catch (e) {
+            blokkerOpptatte = new Set();
         }
-        
-        const sluttDato = prompt('Til dato (format: YYYY-MM-DD):');
-        if (!sluttDato) return;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(sluttDato)) {
-            alert('Ugyldig format. Bruk YYYY-MM-DD');
-            return;
+
+        renderBlokkerKalender();
+        document.getElementById('blokkerModal').classList.add('synlig');
+    };
+
+    window.lukkBlokker = function() {
+        document.getElementById('blokkerModal').classList.remove('synlig');
+    };
+
+    function renderBlokkerKalender() {
+        const aar = blokkerVisMaaned.getFullYear();
+        const maaned = blokkerVisMaaned.getMonth();
+        const maaneder = ['Januar','Februar','Mars','April','Mai','Juni','Juli','August','September','Oktober','November','Desember'];
+        const idag = new Date();
+        idag.setHours(0, 0, 0, 0);
+
+        // Første dag i måneden
+        const forsteDag = new Date(aar, maaned, 1);
+        // Hvilken ukedag (0=søn, 1=man, ..., 6=lør) -> konverter til man=0, søn=6
+        let starter = forsteDag.getDay() - 1;
+        if (starter < 0) starter = 6;
+
+        const dagerIMaaned = new Date(aar, maaned + 1, 0).getDate();
+
+        let html = `
+            <div class="kal-header">
+                <button class="kal-nav" onclick="blokkerForrigeMaaned()">‹</button>
+                <h4>${maaneder[maaned]} ${aar}</h4>
+                <button class="kal-nav" onclick="blokkerNesteMaaned()">›</button>
+            </div>
+            <div class="kal-ukedager">
+                <div>man</div><div>tir</div><div>ons</div><div>tor</div><div>fre</div><div>lør</div><div>søn</div>
+            </div>
+            <div class="kal-grid">
+        `;
+
+        // Tomme celler før starten
+        for (let i = 0; i < starter; i++) {
+            html += '<div class="kal-dag kal-tom"></div>';
         }
-        
-        if (sluttDato < startDato) {
-            alert('Sluttdato må være etter startdato');
-            return;
+
+        // Dager i måneden
+        for (let dag = 1; dag <= dagerIMaaned; dag++) {
+            const dato = new Date(aar, maaned, dag);
+            const iso = isoDato(dato);
+            
+            let klasser = ['kal-dag'];
+            
+            if (dato < idag) {
+                klasser.push('kal-fortid');
+            } else if (blokkerOpptatte.has(iso)) {
+                klasser.push('kal-opptatt');
+            }
+            
+            if (iso === isoDato(idag)) {
+                klasser.push('kal-i-dag');
+            }
+
+            // Markér valg
+            if (blokkerStart && blokkerSlutt) {
+                if (iso >= blokkerStart && iso <= blokkerSlutt) {
+                    if (iso === blokkerStart || iso === blokkerSlutt) {
+                        klasser.push('kal-valgt');
+                    } else {
+                        klasser.push('kal-i-omraade');
+                    }
+                }
+            } else if (blokkerStart && iso === blokkerStart) {
+                klasser.push('kal-valgt');
+            }
+
+            const onclick = (dato >= idag && !blokkerOpptatte.has(iso))
+                ? `onclick="velgBlokkerDato('${iso}')"`
+                : '';
+
+            html += `<div class="${klasser.join(' ')}" ${onclick}>${dag}</div>`;
         }
+
+        html += '</div>';
+        document.getElementById('blokkerKalender').innerHTML = html;
+    }
+
+    window.blokkerForrigeMaaned = function() {
+        blokkerVisMaaned.setMonth(blokkerVisMaaned.getMonth() - 1);
+        renderBlokkerKalender();
+    };
+
+    window.blokkerNesteMaaned = function() {
+        blokkerVisMaaned.setMonth(blokkerVisMaaned.getMonth() + 1);
+        renderBlokkerKalender();
+    };
+
+    window.velgBlokkerDato = function(iso) {
+        if (!blokkerStart || (blokkerStart && blokkerSlutt)) {
+            // Start ny seleksjon
+            blokkerStart = iso;
+            blokkerSlutt = null;
+        } else if (iso < blokkerStart) {
+            // Klikket før start - bytt om
+            blokkerSlutt = blokkerStart;
+            blokkerStart = iso;
+        } else if (iso === blokkerStart) {
+            // Klikket samme dag - en-dags blokk
+            blokkerSlutt = iso;
+        } else {
+            blokkerSlutt = iso;
+        }
+
+        // Sjekk om det er konflikt i området
+        if (blokkerStart && blokkerSlutt) {
+            for (let d = new Date(blokkerStart); d <= new Date(blokkerSlutt); d.setDate(d.getDate() + 1)) {
+                if (blokkerOpptatte.has(isoDato(d))) {
+                    alert('Det er allerede bookinger i denne perioden. Velg en annen periode.');
+                    blokkerStart = null;
+                    blokkerSlutt = null;
+                    document.getElementById('blokkerValgInfo').style.display = 'none';
+                    document.getElementById('bekreftBlokkerBtn').disabled = true;
+                    renderBlokkerKalender();
+                    return;
+                }
+            }
+        }
+
+        // Oppdater info
+        if (blokkerStart && blokkerSlutt) {
+            const dager = Math.round((new Date(blokkerSlutt) - new Date(blokkerStart)) / 86400000) + 1;
+            document.getElementById('blokkerPeriodeTekst').textContent = 
+                `${formaterNorskDato(blokkerStart)} → ${formaterNorskDato(blokkerSlutt)} (${dager} dag${dager > 1 ? 'er' : ''})`;
+            document.getElementById('blokkerValgInfo').style.display = 'block';
+            document.getElementById('bekreftBlokkerBtn').disabled = false;
+        } else if (blokkerStart) {
+            document.getElementById('blokkerPeriodeTekst').textContent = 
+                `Start: ${formaterNorskDato(blokkerStart)} - klikk på sluttdato`;
+            document.getElementById('blokkerValgInfo').style.display = 'block';
+            document.getElementById('bekreftBlokkerBtn').disabled = true;
+        }
+
+        renderBlokkerKalender();
+    };
+
+    window.bekreftBlokker = async function() {
+        if (!blokkerStart || !blokkerSlutt) return;
+        const grunn = document.getElementById('blokkerGrunn').value || 'Blokkert av admin';
         
-        const grunn = prompt('Grunn (f.eks. "Egen bruk", "Service", "Vedlikehold"):') || 'Blokkert av admin';
-        
-        if (!confirm(`Blokker ${startDato} til ${sluttDato}?\nGrunn: ${grunn}`)) return;
-        
-        api('/api/admin/blokker-datoer', {
-            method: 'POST',
-            body: JSON.stringify({ startDato, sluttDato, grunn })
-        }).then(async res => {
+        try {
+            const res = await api('/api/admin/blokker-datoer', {
+                method: 'POST',
+                body: JSON.stringify({ startDato: blokkerStart, sluttDato: blokkerSlutt, grunn })
+            });
             const data = await res.json();
             if (!res.ok) {
                 if (data.konflikter) {
@@ -405,8 +564,11 @@
                 return;
             }
             alert(data.melding);
+            lukkBlokker();
             lastData();
-        }).catch(err => alert('Feil: ' + err.message));
+        } catch (err) {
+            alert('Feil: ' + err.message);
+        }
     };
 
     // Slett blokkering fra detaljvisning (når bookingen er BLOKK-*)
