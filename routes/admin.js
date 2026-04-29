@@ -121,6 +121,78 @@ router.patch('/kunde/:id', async (req, res) => {
     }
 });
 
+// Marker faktura som sendt (admin har sendt faktura via e-post/regnskapsprogram)
+router.post('/faktura-sendt/:ordreId', async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const { fakturanummer, notat } = req.body;
+        const db = getDb();
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+        
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+        if (booking.status !== 'venter_faktura') {
+            return res.status(400).json({ feil: `Bookingen har feil status: ${booking.status}` });
+        }
+
+        const noteDeler = [`[${new Date().toISOString()}] Faktura sendt`];
+        if (fakturanummer) noteDeler.push(`(faktura #${fakturanummer})`);
+        if (notat) noteDeler.push(`- ${notat}`);
+
+        await db.run(`
+            UPDATE bookings 
+            SET status = 'venter_betaling', notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [noteDeler.join(' '), ordreId]);
+
+        // SMS til kunde
+        try {
+            await smsService.sendSms({
+                til: booking.kundeTelefon,
+                melding: `Hei ${booking.kundeNavn}! Faktura for booking ${ordreId} er sendt til ${booking.kundeEpost}. Nøkkelboks-kode aktiveres når faktura er betalt.`
+            });
+        } catch (e) { console.error('SMS feilet:', e); }
+
+        res.json({ ok: true, melding: 'Faktura markert som sendt. Kunde varslet.' });
+    } catch (error) {
+        console.error('Faktura-sendt-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Marker faktura som betalt (admin har sett betaling i banken)
+// Dette utløser samme flyt som Vipps-betaling: går til venter_godkjenning
+router.post('/faktura-betalt/:ordreId', async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const db = getDb();
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+        
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+        if (!['venter_betaling', 'venter_faktura'].includes(booking.status)) {
+            return res.status(400).json({ feil: `Bookingen har feil status: ${booking.status}` });
+        }
+
+        await db.run(`
+            UPDATE bookings 
+            SET status = 'venter_godkjenning', 
+                betalt = ?, 
+                vippsTransaksjonsId = ?,
+                notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [
+            new Date().toISOString(),
+            `FAKTURA-${Date.now()}`,
+            `[${new Date().toISOString()}] Faktura registrert som betalt av admin`,
+            ordreId
+        ]);
+
+        res.json({ ok: true, melding: 'Faktura markert som betalt. Bookingen kan nå godkjennes.' });
+    } catch (error) {
+        console.error('Faktura-betalt-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Hent oversikt: alle bookinger med valgfritt filter
 router.get('/bookinger', async (req, res) => {
     try {
@@ -515,6 +587,7 @@ router.get('/statistikk', async (req, res) => {
         const stats = await db.get(`
             SELECT 
                 COUNT(*) as totalBookinger,
+                COUNT(CASE WHEN status = 'venter_faktura' THEN 1 END) as venterFaktura,
                 COUNT(CASE WHEN status = 'venter_godkjenning' THEN 1 END) as venterGodkjenning,
                 COUNT(CASE WHEN status = 'aktiv' THEN 1 END) as aktive,
                 COUNT(CASE WHEN status = 'venter_godkjenning_retur' THEN 1 END) as venterRetur,

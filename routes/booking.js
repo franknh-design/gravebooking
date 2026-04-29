@@ -99,7 +99,7 @@ router.get('/opptatte-datoer', async (req, res) => {
     });
 });
 
-// Opprett booking + start Vipps-betaling
+// Opprett booking + start Vipps-betaling ELLER faktura-forespørsel
 router.post('/opprett', async (req, res) => {
     try {
         const { 
@@ -107,7 +107,9 @@ router.post('/opprett', async (req, res) => {
             startDato, sluttDato, 
             ansvarBekreftet, ansvarTidspunkt,
             tilleggIds = [], transportIds = [], 
-            transportAdresse 
+            transportAdresse,
+            betalingsmetode = 'vipps',  // 'vipps' eller 'faktura'
+            firma, orgNummer            // valgfritt for faktura
         } = req.body;
 
         if (!kundeNavn || !kundeTelefon || !kundeEpost || !startDato || !sluttDato) {
@@ -118,6 +120,10 @@ router.post('/opprett', async (req, res) => {
             return res.status(400).json({ feil: 'Ansvarsvilkår må bekreftes' });
         }
 
+        if (!['vipps', 'faktura'].includes(betalingsmetode)) {
+            return res.status(400).json({ feil: 'Ugyldig betalingsmetode' });
+        }
+
         // Hvis transport valgt, må adresse være angitt
         if (transportIds.length > 0 && !transportAdresse) {
             return res.status(400).json({ feil: 'Adresse kreves for bringing/henting' });
@@ -126,7 +132,7 @@ router.post('/opprett', async (req, res) => {
         const db = getDb();
         const konflikter = await db.all(`
             SELECT id FROM bookings 
-            WHERE status NOT IN ('avbrutt', 'fullført')
+            WHERE status NOT IN ('avbrutt', 'fullfoert')
             AND NOT (sluttDato < ? OR startDato > ?)
         `, [startDato, sluttDato]);
 
@@ -163,6 +169,28 @@ router.post('/opprett', async (req, res) => {
             }
             throw e;
         }
+
+        // Oppdater kundens firma-info hvis oppgitt (overskriver kun hvis ny verdi)
+        if (firma || orgNummer) {
+            const oppdat = [];
+            const verdier = [];
+            if (firma) { oppdat.push('firma = ?'); verdier.push(firma); }
+            if (orgNummer) { oppdat.push('orgNummer = ?'); verdier.push(orgNummer); }
+            verdier.push(kundeId);
+            await db.run(`UPDATE kunder SET ${oppdat.join(', ')} WHERE id = ?`, verdier);
+        }
+
+        // Status avhenger av betalingsmetode
+        const initialStatus = betalingsmetode === 'vipps' ? 'venter_betaling' : 'venter_faktura';
+        
+        // Notater (lagrer firma-info i selve bookingen for sporbarhet)
+        let notater = null;
+        if (betalingsmetode === 'faktura') {
+            const noteDeler = [`[${new Date().toISOString()}] Faktura-forespørsel.`];
+            if (firma) noteDeler.push(`Firma: ${firma}`);
+            if (orgNummer) noteDeler.push(`Org.nr: ${orgNummer}`);
+            notater = noteDeler.join(' ');
+        }
         
         await db.run(`
             INSERT INTO bookings (
@@ -170,21 +198,43 @@ router.post('/opprett', async (req, res) => {
                 startDato, sluttDato, antallDager, totalPris, status,
                 tilleggIds, transportIds, transportAdresse, prisDetaljer,
                 inspeksjonToken,
-                ansvarBekreftet, ansvarTidspunkt, ansvarIp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'venter_betaling', ?, ?, ?, ?, ?, 1, ?, ?)
+                ansvarBekreftet, ansvarTidspunkt, ansvarIp, notater
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
         `, [
             ordreId, kundeNavn, kundeTelefon, kundeEpost, kundeId,
-            startDato, sluttDato, antallDager, totalPris,
+            startDato, sluttDato, antallDager, totalPris, initialStatus,
             JSON.stringify(tilleggIds), 
             JSON.stringify(transportIds), 
             transportAdresse || null,
             JSON.stringify(pris),
             inspeksjonToken,
             ansvarTidspunkt || new Date().toISOString(), 
-            ip
+            ip,
+            notater
         ]);
 
-        // Beskrivelse til Vipps - kort og informativ
+        // Hvis faktura: ferdig, returner umiddelbart (ingen Vipps)
+        if (betalingsmetode === 'faktura') {
+            // Varsle admin via SMS hvis ADMIN_TELEFON er satt
+            if (process.env.ADMIN_TELEFON) {
+                try {
+                    await smsService.sendSms({
+                        til: process.env.ADMIN_TELEFON,
+                        melding: `Ny FAKTURA-forespørsel: ${kundeNavn} (${kundeTelefon}) ønsker å leie ${config.maskin.navn} ${startDato} - ${sluttDato} (${totalPris} kr). Behandle i admin.`
+                    });
+                } catch (e) { console.error('Admin-varsel feilet:', e.message); }
+            }
+            return res.json({
+                ordreId,
+                betalingsmetode: 'faktura',
+                beloep: totalPris,
+                antallDager,
+                prisDetaljer: pris,
+                melding: 'Forespørselen er mottatt. Vi behandler den og sender faktura innen 24 timer. Datoene er reservert for deg.'
+            });
+        }
+
+        // Hvis Vipps: start betalingsflyt som før
         const beskrivelseDeler = [`Leie ${config.maskin.navn} ${antallDager} dag(er)`];
         if (tilleggIds.length) beskrivelseDeler.push('+ tillegg');
         if (transportIds.length) beskrivelseDeler.push('+ transport');
@@ -198,6 +248,7 @@ router.post('/opprett', async (req, res) => {
 
         res.json({
             ordreId,
+            betalingsmetode: 'vipps',
             betalingsUrl: vippsResultat.url,
             beloep: totalPris,
             antallDager,
