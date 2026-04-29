@@ -76,7 +76,7 @@ router.get('/opptatte-datoer', async (req, res) => {
     const db = getDb();
     const bookinger = await db.all(`
         SELECT startDato, sluttDato, status FROM bookings 
-        WHERE status NOT IN ('avbrutt', 'fullført')
+        WHERE status NOT IN ('avbrutt', 'fullfoert')
         AND sluttDato >= ?
         AND startDato <= ?
     `, [fraDato, tilDato]);
@@ -91,8 +91,10 @@ router.get('/opptatte-datoer', async (req, res) => {
         }
     });
 
+    const sorterte = Array.from(opptatte).sort();
     res.json({ 
-        opptatteDatoer: Array.from(opptatte).sort(),
+        opptatte: sorterte,
+        opptatteDatoer: sorterte, // Beholdes for bakoverkompatibilitet
         antallBookinger: bookinger.length
     });
 });
