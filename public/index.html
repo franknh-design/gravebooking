@@ -531,8 +531,26 @@
                         </div>
                     </div>
 
-                    <button class="primary" id="bookKnapp" onclick="opprettBooking()" disabled>
+                    <!-- Faktura-felter (vises kun ved faktura-valg) -->
+                    <div id="fakturaFelter" style="display:none; background: #f0f4ff; padding: 14px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid #1c5fa8;">
+                        <p style="font-size: 0.9rem; color: #1c5fa8; margin-bottom: 10px;">
+                            <strong>Faktura-bestilling:</strong> Vi behandler forespørselen og sender faktura per e-post innen 24 timer. Datoene er reservert for deg under behandling.
+                        </p>
+                        <div class="felt-rad">
+                            <label for="firma">Firmanavn (valgfritt)</label>
+                            <input type="text" id="firma" placeholder="Eks: Tromsø Anlegg AS" autocomplete="organization">
+                        </div>
+                        <div class="felt-rad">
+                            <label for="orgNummer">Organisasjonsnummer (valgfritt)</label>
+                            <input type="text" id="orgNummer" placeholder="999 999 999" pattern="[0-9 ]*" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <button class="primary" id="bookKnapp" onclick="opprettBooking('vipps')" disabled>
                         Velg datoer og bekreft vilkår
+                    </button>
+                    <button class="sekundaer" id="fakturaKnapp" onclick="velgFaktura()" disabled style="margin-top: 8px; width: 100%; padding: 12px; background: white; color: #1c5fa8; border: 1px solid #1c5fa8; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer;">
+                        Be om faktura i stedet
                     </button>
                 </div>
 
@@ -926,6 +944,7 @@
 
         function oppdaterKnapp() {
             const knapp = document.getElementById('bookKnapp');
+            const fakturaKnapp = document.getElementById('fakturaKnapp');
             const harDatoer = valgtStart && valgtSlutt;
             
             // Sjekk alle synlige ansvarspunkter
@@ -942,15 +961,23 @@
             if (!harDatoer) {
                 knapp.textContent = 'Velg datoer i kalenderen';
                 knapp.disabled = true;
+                if (fakturaKnapp) fakturaKnapp.disabled = true;
             } else if (!alleAnsvar) {
                 knapp.textContent = 'Bekreft alle vilkår for å fortsette';
                 knapp.disabled = true;
+                if (fakturaKnapp) fakturaKnapp.disabled = true;
             } else if (!harAdresse) {
                 knapp.textContent = 'Fyll inn adresse for bringing/henting';
                 knapp.disabled = true;
+                if (fakturaKnapp) fakturaKnapp.disabled = true;
             } else {
                 knapp.textContent = 'Book og betal med Vipps';
                 knapp.disabled = false;
+                if (fakturaKnapp && fakturaKnapp.textContent === 'Be om faktura i stedet') {
+                    fakturaKnapp.disabled = false;
+                } else if (fakturaKnapp) {
+                    fakturaKnapp.disabled = false;
+                }
             }
         }
 
@@ -1009,7 +1036,7 @@
             document.getElementById('modalOverlay').classList.remove('synlig');
         }
 
-        async function opprettBooking() {
+        async function opprettBooking(betalingsmetode) {
             if (!valgtStart || !valgtSlutt) return;
             
             const data = {
@@ -1022,16 +1049,24 @@
                 transportIds: valgteTransport(),
                 transportAdresse: document.getElementById('transportAdresse').value.trim() || null,
                 ansvarBekreftet: true,
-                ansvarTidspunkt: new Date().toISOString()
+                ansvarTidspunkt: new Date().toISOString(),
+                betalingsmetode: betalingsmetode || 'vipps'
             };
+
+            // Faktura-spesifikke felter
+            if (betalingsmetode === 'faktura') {
+                data.firma = document.getElementById('firma').value.trim() || null;
+                data.orgNummer = document.getElementById('orgNummer').value.trim().replace(/\s+/g, '') || null;
+            }
 
             for (const k of ['kundeNavn','kundeTelefon','kundeEpost']) {
                 if (!data[k]) { visMelding(`Fyll ut: ${k}`, 'feil'); return; }
             }
 
-            const knapp = document.getElementById('bookKnapp');
+            const knapp = document.getElementById(betalingsmetode === 'faktura' ? 'fakturaKnapp' : 'bookKnapp');
+            const opprinneligTekst = knapp.textContent;
             knapp.disabled = true;
-            knapp.textContent = 'Oppretter...';
+            knapp.textContent = 'Sender...';
 
             try {
                 const res = await fetch('/api/booking/opprett', {
@@ -1043,15 +1078,79 @@
                 
                 if (!res.ok) {
                     visMelding(resultat.feil || 'Noe gikk galt', 'feil');
+                    knapp.textContent = opprinneligTekst;
                     oppdaterKnapp();
                     hentOpptatteDatoer();
                     return;
                 }
-                window.location.href = resultat.betalingsUrl;
+
+                if (resultat.betalingsmetode === 'faktura') {
+                    // Vis bekreftelses-melding i stedet for redirect
+                    visFakturaBekreftelse(resultat);
+                } else {
+                    // Vipps: redirect til betalingsside
+                    window.location.href = resultat.betalingsUrl;
+                }
             } catch (err) {
                 visMelding('Nettverksfeil: ' + err.message, 'feil');
+                knapp.textContent = opprinneligTekst;
                 oppdaterKnapp();
             }
+        }
+
+        function velgFaktura() {
+            // Toggle visning av faktura-felter; hvis allerede åpent → send
+            const felter = document.getElementById('fakturaFelter');
+            const knapp = document.getElementById('fakturaKnapp');
+            
+            if (felter.style.display === 'none' || felter.style.display === '') {
+                felter.style.display = 'block';
+                knapp.textContent = 'Send faktura-forespørsel';
+                // Skjul Vipps-knapp midlertidig
+                document.getElementById('bookKnapp').style.display = 'none';
+                // Legg til "Avbryt"-tekst
+                if (!document.getElementById('fakturaAvbryt')) {
+                    const avbryt = document.createElement('button');
+                    avbryt.id = 'fakturaAvbryt';
+                    avbryt.textContent = 'Tilbake til Vipps-betaling';
+                    avbryt.style.cssText = 'margin-top: 8px; width: 100%; padding: 10px; background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; font-size: 0.85rem;';
+                    avbryt.onclick = avbrytFaktura;
+                    knapp.parentElement.appendChild(avbryt);
+                }
+            } else {
+                opprettBooking('faktura');
+            }
+        }
+
+        function avbrytFaktura() {
+            document.getElementById('fakturaFelter').style.display = 'none';
+            document.getElementById('fakturaKnapp').textContent = 'Be om faktura i stedet';
+            document.getElementById('bookKnapp').style.display = '';
+            const avbryt = document.getElementById('fakturaAvbryt');
+            if (avbryt) avbryt.remove();
+        }
+
+        function visFakturaBekreftelse(resultat) {
+            const innhold = `
+                <div style="text-align:center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">✓</div>
+                    <h2 style="color: #2d7a3a; margin-bottom: 10px;">Forespørsel mottatt!</h2>
+                    <p style="margin-bottom: 16px; color: #555;">
+                        ${resultat.melding || 'Vi behandler forespørselen og sender faktura per e-post innen 24 timer. Datoene er reservert for deg.'}
+                    </p>
+                    <div style="background: #f5f5f5; padding: 14px; border-radius: 8px; text-align: left; margin: 16px 0;">
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 4px;">Bestilling</div>
+                        <div style="font-weight: 600; font-family: monospace;">${resultat.ordreId}</div>
+                        <div style="font-size: 0.9rem; margin-top: 8px;">Total: <strong>${resultat.beloep.toLocaleString('nb-NO')} kr</strong></div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666;">
+                        Faktura sendes til e-postadressen du oppga.<br>
+                        Når faktura er betalt, får du SMS med kode til nøkkelboksen.
+                    </p>
+                </div>
+            `;
+            document.getElementById('modalInnhold').innerHTML = innhold;
+            document.getElementById('modalOverlay').classList.add('synlig');
         }
 
         // Start

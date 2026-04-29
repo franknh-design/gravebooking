@@ -190,6 +190,7 @@ body {
     letter-spacing: 0.3px;
 }
 .status-venter_betaling { background: var(--hover); color: var(--tekst-muted); }
+.status-venter_faktura { background: #e8f1fa; color: #1c5fa8; }
 .status-venter_godkjenning { background: var(--warning-bg); color: var(--warning); }
 .status-godkjent { background: var(--info-bg); color: var(--info); }
 .status-aktiv { background: var(--success-bg); color: var(--success); }

@@ -80,6 +80,7 @@
 
             const stats = [
                 { label: 'Totalt', verdi: data.totalBookinger || 0, klasse: '' },
+                { label: 'Venter faktura', verdi: data.venterFaktura || 0, klasse: 'info' },
                 { label: 'Venter godkjenning', verdi: data.venterGodkjenning || 0, klasse: 'warning' },
                 { label: 'Aktive', verdi: data.aktive || 0, klasse: 'success' },
                 { label: 'Venter retur', verdi: data.venterRetur || 0, klasse: 'warning' },
@@ -134,6 +135,7 @@
     function formaterStatus(s) {
         const m = {
             'venter_betaling': 'Venter betaling',
+            'venter_faktura': 'Venter faktura',
             'venter_godkjenning': 'Venter godkjenning',
             'godkjent': 'Godkjent',
             'aktiv': 'Aktiv',
@@ -278,6 +280,18 @@
             return `<div class="actions-rad">${knapper.join('')}</div>`;
         }
 
+        // Faktura-håndtering
+        if (b.status === 'venter_faktura') {
+            knapper.push(`<button class="action-btn primary" onclick="markerFakturaSendt('${b.ordreId}')">Marker faktura sendt</button>`);
+            knapper.push(`<button class="action-btn danger" onclick="avvis('${b.ordreId}')">Avvis</button>`);
+        }
+        
+        if (b.status === 'venter_betaling' && b.vippsTransaksjonsId === null) {
+            // Faktura sendt, venter på innbetaling
+            knapper.push(`<button class="action-btn success" onclick="markerFakturaBetalt('${b.ordreId}')">Marker faktura betalt</button>`);
+            knapper.push(`<button class="action-btn danger" onclick="avvis('${b.ordreId}')">Avvis</button>`);
+        }
+
         if (b.status === 'venter_godkjenning') {
             knapper.push(`<button class="action-btn primary" onclick="godkjenn('${b.ordreId}')">Godkjenn booking</button>`);
             knapper.push(`<button class="action-btn danger" onclick="avvis('${b.ordreId}')">Avvis</button>`);
@@ -365,6 +379,41 @@
                 return;
             }
             alert(`${data.melding}\n\nNy kode: ${data.kode}`);
+            lukkDetalj();
+            lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.markerFakturaSendt = async function(ordreId) {
+        const fakturanummer = prompt('Fakturanummer (valgfritt):');
+        if (fakturanummer === null) return;
+        const notat = prompt('Notat (valgfritt - f.eks. "Sendt til frank@firma.no"):') || '';
+        try {
+            const res = await api(`/api/admin/faktura-sendt/${ordreId}`, {
+                method: 'POST',
+                body: JSON.stringify({ fakturanummer, notat })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(data.melding);
+            lukkDetalj();
+            lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.markerFakturaBetalt = async function(ordreId) {
+        if (!confirm('Bekreft at faktura er betalt? Bookingen flyttes til "venter godkjenning" så du kan godkjenne den og starte leieperioden.')) return;
+        try {
+            const res = await api(`/api/admin/faktura-betalt/${ordreId}`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(data.melding);
             lukkDetalj();
             lastData();
         } catch (e) { alert('Feil: ' + e.message); }
