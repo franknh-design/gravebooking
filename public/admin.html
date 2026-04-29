@@ -23,6 +23,7 @@
         <header class="topbar">
             <h1>Gravebooking Admin</h1>
             <div class="topbar-actions">
+                <button class="btn-tekst" onclick="visKunder()">Kunder</button>
                 <button class="btn-tekst" onclick="visBlokker()">Blokker datoer</button>
                 <a href="/qr.html" class="btn-tekst">QR-kode</a>
                 <a href="/api/admin/eksport.csv?token=" id="eksportLenke" class="btn-tekst">Eksporter CSV</a>
@@ -51,6 +52,27 @@
     <div class="modal-overlay" id="detaljModal" onclick="if(event.target===this) lukkDetalj()">
         <div class="modal-innhold detalj-modal">
             <div id="detaljInnhold"></div>
+        </div>
+    </div>
+
+    <!-- Kunder modal -->
+    <div class="modal-overlay" id="kunderModal" onclick="if(event.target===this) lukkKunder()">
+        <div class="modal-innhold kunder-modal">
+            <div class="detalj-header">
+                <div class="detalj-tittel">Kunder</div>
+                <button class="lukk-btn" onclick="lukkKunder()">×</button>
+            </div>
+            <input type="text" id="kundeSoek" placeholder="Søk navn, e-post eller telefon..." 
+                style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; margin-bottom: 14px;"
+                oninput="lastKunder()">
+            <div id="kundeListe"></div>
+        </div>
+    </div>
+
+    <!-- Kundedetaljer modal -->
+    <div class="modal-overlay" id="kundeDetaljModal" onclick="if(event.target===this) lukkKundeDetalj()">
+        <div class="modal-innhold detalj-modal">
+            <div id="kundeDetaljInnhold"></div>
         </div>
     </div>
 

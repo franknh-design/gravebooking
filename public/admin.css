@@ -505,3 +505,33 @@ body {
 @media (max-width: 600px) {
     .kal-dag { font-size: 0.78rem; }
 }
+
+/* Kunder-modal */
+.kunder-modal { max-width: 700px; }
+
+.kunder-modal .felt {
+    margin-bottom: 10px;
+}
+.kunder-modal .felt label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--tekst-muted);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+.kunder-modal .felt input,
+.kunder-modal .felt textarea,
+.detalj-modal .felt input,
+.detalj-modal .felt textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-family: inherit;
+}
+.detalj-modal .felt textarea,
+.kunder-modal .felt textarea {
+    resize: vertical;
+    min-height: 60px;
+}

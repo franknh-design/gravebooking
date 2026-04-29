@@ -189,7 +189,7 @@
 
             <div class="detalj-seksjon">
                 <h3>Kunde</h3>
-                <div class="detalj-rad"><span class="label">Navn:</span><span class="verdi">${b.kundeNavn}</span></div>
+                <div class="detalj-rad"><span class="label">Navn:</span><span class="verdi">${b.kundeNavn} ${b.kundeId ? `<a href="#" onclick="lukkDetalj(); visKundeDetalj(${b.kundeId}); return false;" style="margin-left:6px;font-size:0.8rem;">(se kunde)</a>` : ''}</span></div>
                 <div class="detalj-rad"><span class="label">Telefon:</span><span class="verdi"><a href="tel:${b.kundeTelefon}">${b.kundeTelefon}</a> · <a href="sms:${b.kundeTelefon}">SMS</a></span></div>
                 <div class="detalj-rad"><span class="label">E-post:</span><span class="verdi"><a href="mailto:${b.kundeEpost}">${b.kundeEpost}</a></span></div>
             </div>
@@ -363,6 +363,195 @@
             alert(data.advarsel);
             lukkDetalj();
             lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    // ----- Kunder -----
+    window.visKunder = function() {
+        document.getElementById('kunderModal').classList.add('synlig');
+        document.getElementById('kundeSoek').value = '';
+        lastKunder();
+    };
+
+    window.lukkKunder = function() {
+        document.getElementById('kunderModal').classList.remove('synlig');
+    };
+
+    window.lastKunder = async function() {
+        const soek = document.getElementById('kundeSoek').value.trim();
+        const url = soek ? `/api/admin/kunder?soek=${encodeURIComponent(soek)}` : '/api/admin/kunder';
+        
+        try {
+            const res = await api(url);
+            const kunder = await res.json();
+            renderKundeListe(kunder);
+        } catch (e) { console.error(e); }
+    };
+
+    function renderKundeListe(kunder) {
+        const el = document.getElementById('kundeListe');
+        if (!kunder.length) {
+            el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--tekst-muted);">Ingen kunder funnet</div>';
+            return;
+        }
+
+        el.innerHTML = kunder.map(k => `
+            <div class="booking-rad" onclick="visKundeDetalj(${k.id})" style="grid-template-columns: 1fr auto auto;">
+                <div class="booking-info">
+                    <div class="booking-tittel">
+                        ${k.navn}
+                        ${k.blokkert ? '<span class="status-pille status-avbrutt" style="margin-left:6px;">Blokkert</span>' : ''}
+                    </div>
+                    <div class="booking-meta">
+                        <span class="booking-meta-item">${k.epost}</span>
+                        <span class="booking-meta-item">${k.telefon}</span>
+                        ${k.firma ? `<span class="booking-meta-item">${k.firma}</span>` : ''}
+                        ${k.antallSkader > 0 ? `<span class="booking-meta-item" style="color:var(--feil);">⚠ ${k.antallSkader} skade(r)</span>` : ''}
+                    </div>
+                </div>
+                <div style="text-align:right;font-size:0.85rem;">
+                    <div>${k.totalBookinger || 0} bookinger</div>
+                    <div style="color:var(--tekst-muted);">${(k.totalOmsetning || 0).toLocaleString('nb-NO')} kr</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.visKundeDetalj = async function(kundeId) {
+        try {
+            const res = await api(`/api/admin/kunde/${kundeId}`);
+            const k = await res.json();
+            renderKundeDetalj(k);
+            document.getElementById('kundeDetaljModal').classList.add('synlig');
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.lukkKundeDetalj = function() {
+        document.getElementById('kundeDetaljModal').classList.remove('synlig');
+    };
+
+    function renderKundeDetalj(k) {
+        const html = `
+            <div class="detalj-header">
+                <div>
+                    <div class="detalj-tittel">${k.navn}</div>
+                    <div style="font-size:0.85rem;color:var(--tekst-muted);">Kunde #${k.id}</div>
+                </div>
+                <button class="lukk-btn" onclick="lukkKundeDetalj()">×</button>
+            </div>
+
+            ${k.blokkert ? `
+                <div style="background:var(--feil-bg);color:var(--feil);padding:10px 14px;border-radius:8px;margin-bottom:14px;">
+                    <strong>BLOKKERT</strong> ${k.blokkertGrunn ? '— ' + k.blokkertGrunn : ''}
+                </div>
+            ` : ''}
+
+            <div class="detalj-seksjon">
+                <h3>Kontakt</h3>
+                <div class="detalj-rad"><span class="label">E-post:</span><span class="verdi"><a href="mailto:${k.epost}">${k.epost}</a></span></div>
+                <div class="detalj-rad"><span class="label">Telefon:</span><span class="verdi"><a href="tel:${k.telefon}">${k.telefon}</a> · <a href="sms:${k.telefon}">SMS</a></span></div>
+                <div class="detalj-rad"><span class="label">Kunde siden:</span><span class="verdi">${new Date(k.opprettet).toLocaleDateString('nb-NO')}</span></div>
+            </div>
+
+            <div class="detalj-seksjon">
+                <h3>Statistikk</h3>
+                <div class="detalj-rad"><span class="label">Totalt bookinger:</span><span class="verdi">${k.totalBookinger}</span></div>
+                <div class="detalj-rad"><span class="label">Total omsetning:</span><span class="verdi">${(k.totalOmsetning || 0).toLocaleString('nb-NO')} kr</span></div>
+                <div class="detalj-rad"><span class="label">Fullførte:</span><span class="verdi">${k.antallFullfoert}</span></div>
+                ${k.antallSkader > 0 ? `<div class="detalj-rad"><span class="label">Skader:</span><span class="verdi" style="color:var(--feil);">${k.antallSkader}</span></div>` : ''}
+                ${k.sisteBooking ? `<div class="detalj-rad"><span class="label">Siste booking:</span><span class="verdi">${k.sisteBooking}</span></div>` : ''}
+            </div>
+
+            <div class="detalj-seksjon">
+                <h3>Firmainformasjon (valgfritt)</h3>
+                <div class="felt"><label>Firma</label><input type="text" id="kFirma" value="${k.firma || ''}" placeholder="Firmanavn"></div>
+                <div class="felt"><label>Org.nr</label><input type="text" id="kOrgNr" value="${k.orgNummer || ''}" placeholder="999999999"></div>
+                <div class="felt"><label>Fakturaadresse</label><textarea id="kFakturaadr" placeholder="Gateadresse, postnr, sted">${k.fakturaadresse || ''}</textarea></div>
+            </div>
+
+            <div class="detalj-seksjon">
+                <h3>Interne notater</h3>
+                <textarea id="kNotater" rows="4" placeholder="Notater om denne kunden (kun synlig for admin)" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;">${k.notater || ''}</textarea>
+            </div>
+
+            ${k.bookinger && k.bookinger.length > 0 ? `
+                <div class="detalj-seksjon">
+                    <h3>Bookinghistorikk</h3>
+                    ${k.bookinger.map(b => `
+                        <div style="padding:8px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:0.85rem;cursor:pointer;" 
+                             onclick="lukkKundeDetalj(); visDetaljer('${b.ordreId}');">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <strong>${b.startDato} → ${b.sluttDato}</strong>
+                                    <span class="status-pille status-${b.status}" style="margin-left:6px;">${formaterStatus(b.status)}</span>
+                                </div>
+                                <div>${b.totalPris.toLocaleString('nb-NO')} kr</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+
+            <div class="actions-rad">
+                <button class="action-btn primary" onclick="lagreKunde(${k.id})">Lagre endringer</button>
+                ${k.blokkert 
+                    ? `<button class="action-btn success" onclick="opphevBlokkering(${k.id})">Opphev blokkering</button>`
+                    : `<button class="action-btn danger" onclick="blokkerKunde(${k.id})">Blokker kunde</button>`
+                }
+            </div>
+        `;
+        document.getElementById('kundeDetaljInnhold').innerHTML = html;
+    }
+
+    window.lagreKunde = async function(kundeId) {
+        try {
+            const data = {
+                firma: document.getElementById('kFirma').value,
+                orgNummer: document.getElementById('kOrgNr').value,
+                fakturaadresse: document.getElementById('kFakturaadr').value,
+                notater: document.getElementById('kNotater').value
+            };
+            const res = await api(`/api/admin/kunde/${kundeId}`, {
+                method: 'PATCH',
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                alert('Lagret');
+            } else {
+                const d = await res.json();
+                alert('Feil: ' + d.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.blokkerKunde = async function(kundeId) {
+        const grunn = prompt('Grunn for blokkering (vises til kunden ved booking-forsøk):');
+        if (grunn === null) return;
+        try {
+            const res = await api(`/api/admin/kunde/${kundeId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ blokkert: true, blokkertGrunn: grunn })
+            });
+            if (res.ok) {
+                alert('Kunde blokkert');
+                lukkKundeDetalj();
+                lastKunder();
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.opphevBlokkering = async function(kundeId) {
+        if (!confirm('Opphev blokkeringen?')) return;
+        try {
+            const res = await api(`/api/admin/kunde/${kundeId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ blokkert: false, blokkertGrunn: null })
+            });
+            if (res.ok) {
+                alert('Blokkering opphevet');
+                lukkKundeDetalj();
+                lastKunder();
+            }
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
