@@ -214,6 +214,92 @@ router.post('/godkjenn/:ordreId', async (req, res) => {
     }
 });
 
+// Send eksisterende kode på SMS igjen (kunde har glemt SMS)
+router.post('/send-kode-igjen/:ordreId', async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const db = getDb();
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+        
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+        if (!booking.iglohomeKode) {
+            return res.status(400).json({ feil: 'Ingen kode generert ennå. Bookingen må først godkjennes og innsjekk-bilder må være tatt.' });
+        }
+        if (!['godkjent','aktiv','venter_godkjenning_retur'].includes(booking.status)) {
+            return res.status(400).json({ feil: `Kan ikke sende kode for status: ${booking.status}` });
+        }
+
+        await smsService.sendSms({
+            til: booking.kundeTelefon,
+            melding: `Hei ${booking.kundeNavn}! Her er din kode på nytt:\n\nNøkkelboks: ${booking.iglohomeKode}\n\nGyldig under hele leieperioden ${booking.startDato} - ${booking.sluttDato}.`
+        });
+
+        // Logg handlingen
+        const notat = `[${new Date().toISOString()}] Kode sendt på nytt til ${booking.kundeTelefon}`;
+        await db.run(`
+            UPDATE bookings 
+            SET notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [notat, ordreId]);
+
+        res.json({ ok: true, melding: 'Kode sendt på SMS' });
+    } catch (error) {
+        console.error('Send-kode-igjen-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Generer ny kode (gammel kode kompromittert)
+router.post('/ny-kode/:ordreId', async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const { grunn } = req.body;
+        const db = getDb();
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+        
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+        if (!['godkjent','aktiv','venter_godkjenning_retur'].includes(booking.status)) {
+            return res.status(400).json({ feil: `Kan ikke generere ny kode for status: ${booking.status}` });
+        }
+
+        // Generer ny kode via iglohome
+        const iglohomeService = require('../services/iglohomeService');
+        const ny = await iglohomeService.genererLeiekode({
+            startDato: booking.startDato,
+            sluttDato: booking.sluttDato,
+            ordreId: booking.ordreId
+        });
+
+        const gammelKode = booking.iglohomeKode;
+
+        // Oppdater booking
+        await db.run(`
+            UPDATE bookings 
+            SET iglohomeKode = ?, iglohomeKodeId = ?
+            WHERE ordreId = ?
+        `, [ny.kode, ny.kodeId, ordreId]);
+
+        // Send ny kode til kunde
+        await smsService.sendSms({
+            til: booking.kundeTelefon,
+            melding: `Hei ${booking.kundeNavn}! Ny kode til nøkkelboksen: ${ny.kode}\n\nDen gamle koden fungerer ikke lenger. Gyldig under hele leieperioden.`
+        });
+
+        // Logg handlingen
+        const notat = `[${new Date().toISOString()}] Ny kode generert (gammel: ${gammelKode}). Grunn: ${grunn || 'Ikke spesifisert'}`;
+        await db.run(`
+            UPDATE bookings 
+            SET notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [notat, ordreId]);
+
+        res.json({ ok: true, kode: ny.kode, melding: 'Ny kode generert og sendt til kunde' });
+    } catch (error) {
+        console.error('Ny-kode-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Avvis booking - må refundere via Vipps separat
 router.post('/avvis/:ordreId', async (req, res) => {
     try {

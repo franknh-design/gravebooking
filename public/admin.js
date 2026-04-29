@@ -285,6 +285,10 @@
 
         if (['godkjent','aktiv','venter_godkjenning_retur'].includes(b.status)) {
             knapper.push(`<button class="action-btn tekst" onclick="sendLenkerIgjen('${b.ordreId}')">Send lenker på nytt</button>`);
+            if (b.iglohomeKode) {
+                knapper.push(`<button class="action-btn tekst" onclick="sendKodeIgjen('${b.ordreId}')">Send kode på SMS</button>`);
+                knapper.push(`<button class="action-btn warning" onclick="lagNyKode('${b.ordreId}')">Lag ny kode</button>`);
+            }
         }
 
         if (b.status === 'venter_godkjenning_retur') {
@@ -330,6 +334,39 @@
             const res = await api(`/api/admin/send-lenker-igjen/${ordreId}`, { method: 'POST' });
             if (res.ok) alert('Lenker sendt på nytt');
             else alert('Feil ved sending');
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.sendKodeIgjen = async function(ordreId) {
+        if (!confirm('Send eksisterende låskode på SMS til kunden?')) return;
+        try {
+            const res = await api(`/api/admin/send-kode-igjen/${ordreId}`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(data.melding);
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.lagNyKode = async function(ordreId) {
+        const grunn = prompt('Grunn for å generere ny kode:\n\n(F.eks. "Kunde mistenker at andre har sett SMS")');
+        if (grunn === null) return;
+        if (!confirm('Den gamle koden vil slutte å fungere. Kunden får ny kode på SMS. Fortsette?')) return;
+        try {
+            const res = await api(`/api/admin/ny-kode/${ordreId}`, {
+                method: 'POST',
+                body: JSON.stringify({ grunn })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(`${data.melding}\n\nNy kode: ${data.kode}`);
+            lukkDetalj();
+            lastData();
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
