@@ -18,6 +18,109 @@ function krevAdmin(req, res, next) {
 
 router.use(krevAdmin);
 
+// Hent alle kunder med statistikk
+router.get('/kunder', async (req, res) => {
+    try {
+        const { soek } = req.query;
+        const db = getDb();
+        
+        let query = `
+            SELECT 
+                k.*,
+                COUNT(b.id) as totalBookinger,
+                COALESCE(SUM(CASE WHEN b.status IN ('aktiv','venter_godkjenning_retur','fullfoert') THEN b.totalPris ELSE 0 END), 0) as totalOmsetning,
+                COUNT(CASE WHEN b.status = 'fullfoert' THEN 1 END) as antallFullfoert,
+                COUNT(CASE WHEN b.status = 'skade_registrert' THEN 1 END) as antallSkader,
+                MAX(b.startDato) as sisteBooking
+            FROM kunder k
+            LEFT JOIN bookings b ON b.kundeId = k.id
+        `;
+        
+        const params = [];
+        if (soek) {
+            query += ` WHERE k.navn LIKE ? OR k.epost LIKE ? OR k.telefon LIKE ?`;
+            const s = `%${soek}%`;
+            params.push(s, s, s);
+        }
+        
+        query += ` GROUP BY k.id ORDER BY k.sistAktiv DESC LIMIT 200`;
+        
+        const kunder = await db.all(query, params);
+        res.json(kunder);
+    } catch (error) {
+        console.error('Kunder-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Hent én kunde med all booking-historikk
+router.get('/kunde/:id', async (req, res) => {
+    try {
+        const db = getDb();
+        const { hentKundeMedStatistikk } = require('../db/database');
+        const kunde = await hentKundeMedStatistikk(req.params.id);
+        if (!kunde) return res.status(404).json({ feil: 'Ikke funnet' });
+        
+        const bookinger = await db.all(`
+            SELECT ordreId, startDato, sluttDato, antallDager, totalPris, status, opprettet
+            FROM bookings 
+            WHERE kundeId = ?
+            ORDER BY opprettet DESC
+        `, [req.params.id]);
+        
+        res.json({ ...kunde, bookinger });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Oppdater kunde (notater, blokkering, firma-info)
+router.patch('/kunde/:id', async (req, res) => {
+    try {
+        const { notater, blokkert, blokkertGrunn, firma, orgNummer, fakturaadresse } = req.body;
+        const db = getDb();
+        
+        const oppdateringer = [];
+        const verdier = [];
+        
+        if (notater !== undefined) {
+            oppdateringer.push('notater = ?');
+            verdier.push(notater);
+        }
+        if (blokkert !== undefined) {
+            oppdateringer.push('blokkert = ?');
+            verdier.push(blokkert ? 1 : 0);
+        }
+        if (blokkertGrunn !== undefined) {
+            oppdateringer.push('blokkertGrunn = ?');
+            verdier.push(blokkertGrunn);
+        }
+        if (firma !== undefined) {
+            oppdateringer.push('firma = ?');
+            verdier.push(firma);
+        }
+        if (orgNummer !== undefined) {
+            oppdateringer.push('orgNummer = ?');
+            verdier.push(orgNummer);
+        }
+        if (fakturaadresse !== undefined) {
+            oppdateringer.push('fakturaadresse = ?');
+            verdier.push(fakturaadresse);
+        }
+        
+        if (oppdateringer.length === 0) {
+            return res.status(400).json({ feil: 'Ingen felter å oppdatere' });
+        }
+        
+        verdier.push(req.params.id);
+        await db.run(`UPDATE kunder SET ${oppdateringer.join(', ')} WHERE id = ?`, verdier);
+        
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Hent oversikt: alle bookinger med valgfritt filter
 router.get('/bookinger', async (req, res) => {
     try {

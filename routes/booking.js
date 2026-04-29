@@ -143,17 +143,35 @@ router.post('/opprett', async (req, res) => {
         const ordreId = `BOOK-${Date.now()}-${uuidv4().slice(0, 8)}`;
         const inspeksjonToken = inspeksjonService.genererToken();
         const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+
+        // Finn eller opprett kunde
+        const { finnEllerOpprettKunde } = require('../db/database');
+        let kundeId;
+        try {
+            kundeId = await finnEllerOpprettKunde({
+                navn: kundeNavn,
+                telefon: kundeTelefon,
+                epost: kundeEpost
+            });
+        } catch (e) {
+            if (e.kundeBlokkert) {
+                return res.status(403).json({ 
+                    feil: 'Booking ikke mulig. ' + e.message
+                });
+            }
+            throw e;
+        }
         
         await db.run(`
             INSERT INTO bookings (
-                ordreId, kundeNavn, kundeTelefon, kundeEpost,
+                ordreId, kundeNavn, kundeTelefon, kundeEpost, kundeId,
                 startDato, sluttDato, antallDager, totalPris, status,
                 tilleggIds, transportIds, transportAdresse, prisDetaljer,
                 inspeksjonToken,
                 ansvarBekreftet, ansvarTidspunkt, ansvarIp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'venter_betaling', ?, ?, ?, ?, ?, 1, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'venter_betaling', ?, ?, ?, ?, ?, 1, ?, ?)
         `, [
-            ordreId, kundeNavn, kundeTelefon, kundeEpost, 
+            ordreId, kundeNavn, kundeTelefon, kundeEpost, kundeId,
             startDato, sluttDato, antallDager, totalPris,
             JSON.stringify(tilleggIds), 
             JSON.stringify(transportIds), 
