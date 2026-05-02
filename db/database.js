@@ -74,6 +74,18 @@ async function initDatabase() {
             notater TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS priser (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,
+            navn TEXT NOT NULL,
+            pris INTEGER NOT NULL,
+            dager INTEGER,
+            aktiv INTEGER DEFAULT 1,
+            sortering INTEGER DEFAULT 0
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_priser_type ON priser(type);
+
         CREATE INDEX IF NOT EXISTS idx_status ON bookings(status);
         CREATE INDEX IF NOT EXISTS idx_dato ON bookings(startDato, sluttDato);
         CREATE INDEX IF NOT EXISTS idx_token ON bookings(inspeksjonToken);
@@ -125,6 +137,43 @@ async function initDatabase() {
         }
         
         console.log(`Migrert ${eksisterende.length} kunder fra eksisterende bookinger`);
+    }
+
+    // Migrering: fyll inn standardpriser fra config hvis tabellen er tom
+    const antallPriser = await db.get(`SELECT COUNT(*) as ant FROM priser`);
+    if (antallPriser.ant === 0) {
+        console.log('Fyller inn standardpriser fra config...');
+        const config = require('../config/config');
+        
+        // Leie-kategorier
+        for (const k of config.priser.kategorier) {
+            await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris, dager, sortering) VALUES (?, ?, ?, ?, ?, ?)`,
+                [`leie_${k.dager}`, 'leie', k.navn, k.pris, k.dager, k.dager]);
+        }
+        
+        // Ekstra dag-pris
+        await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris, sortering) VALUES (?, ?, ?, ?, ?)`,
+            ['leie_ekstra', 'leie_ekstra', 'Ekstra dag (over 7 dager)', config.priser.prisPerEkstraDag, 99]);
+        
+        // Tillegg
+        for (const t of config.priser.tillegg) {
+            await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris, sortering) VALUES (?, ?, ?, ?, ?)`,
+                [t.id, 'tillegg', t.navn, t.pris, 0]);
+        }
+        
+        // Transport
+        for (const t of config.priser.transport) {
+            await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris, sortering) VALUES (?, ?, ?, ?, ?)`,
+                [t.id, 'transport', t.navn, t.pris, 0]);
+        }
+        
+        // Depositum og MVA
+        await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris) VALUES (?, ?, ?, ?)`,
+            ['depositum', 'meta', 'Depositum', config.priser.depositum]);
+        await db.run(`INSERT OR IGNORE INTO priser (id, type, navn, pris) VALUES (?, ?, ?, ?)`,
+            ['mva_sats', 'meta', 'MVA-sats (%)', config.priser.mvaSats]);
+        
+        console.log('Standardpriser fylt inn');
     }
 
     console.log('Database initialisert');
