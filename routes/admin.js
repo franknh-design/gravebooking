@@ -690,27 +690,41 @@ router.get('/statistikk', async (req, res) => {
 // Eksporter til CSV (for regnskap)
 router.get('/eksport.csv', async (req, res) => {
     try {
+        const { fra, til, status } = req.query;
         const db = getDb();
-        const bookinger = await db.all(`
+
+        let query = `
             SELECT ordreId, kundeNavn, kundeTelefon, kundeEpost, 
                    startDato, sluttDato, antallDager, totalPris, status,
-                   opprettet, betalt, vippsTransaksjonsId
-            FROM bookings 
-            ORDER BY opprettet DESC
-        `);
+                   opprettet, betalt, vippsTransaksjonsId, notater
+            FROM bookings WHERE 1=1
+        `;
+        const params = [];
 
-        const headers = 'OrdreId,Kunde,Telefon,Epost,Start,Slutt,Dager,Total,Status,Opprettet,Betalt,VippsId';
-        const rows = bookinger.map(b => 
-            [b.ordreId, b.kundeNavn, b.kundeTelefon, b.kundeEpost, 
+        if (fra) { query += ` AND startDato >= ?`; params.push(fra); }
+        if (til) { query += ` AND sluttDato <= ?`; params.push(til); }
+        if (status) { query += ` AND status = ?`; params.push(status); }
+
+        query += ` ORDER BY opprettet DESC`;
+
+        const bookinger = await db.all(query, params);
+
+        const filnavn = fra && til
+            ? `bookinger-${fra}-til-${til}.csv`
+            : `bookinger-${new Date().toISOString().split('T')[0]}.csv`;
+
+        const headers = 'OrdreId,Kunde,Telefon,Epost,Start,Slutt,Dager,TotalEksMva,Status,Opprettet,Betalt,VippsId,Notater';
+        const rows = bookinger.map(b =>
+            [b.ordreId, b.kundeNavn, b.kundeTelefon, b.kundeEpost,
              b.startDato, b.sluttDato, b.antallDager, b.totalPris, b.status,
-             b.opprettet, b.betalt, b.vippsTransaksjonsId || '']
+             b.opprettet, b.betalt || '', b.vippsTransaksjonsId || '', b.notater || '']
             .map(v => `"${(v || '').toString().replace(/"/g, '""')}"`)
             .join(',')
         );
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="bookinger-${new Date().toISOString().split('T')[0]}.csv"`);
-        res.send([headers, ...rows].join('\n'));
+        res.setHeader('Content-Disposition', `attachment; filename="${filnavn}"`);
+        res.send('\uFEFF' + [headers, ...rows].join('\n'));
     } catch (error) {
         res.status(500).json({ feil: error.message });
     }
