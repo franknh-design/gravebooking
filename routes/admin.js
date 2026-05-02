@@ -18,6 +18,82 @@ function krevAdmin(req, res, next) {
 
 router.use(krevAdmin);
 
+// Hent alle priser
+router.get('/priser', async (req, res) => {
+    try {
+        const db = getDb();
+        const priser = await db.all(`SELECT * FROM priser ORDER BY type, sortering, id`);
+        res.json(priser);
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Oppdater én pris
+router.patch('/pris/:id', async (req, res) => {
+    try {
+        const { pris, navn, aktiv } = req.body;
+        const db = getDb();
+        
+        const oppdateringer = [];
+        const verdier = [];
+        
+        if (pris !== undefined) {
+            if (isNaN(pris) || pris < 0) return res.status(400).json({ feil: 'Ugyldig pris' });
+            oppdateringer.push('pris = ?');
+            verdier.push(Math.round(pris));
+        }
+        if (navn !== undefined) { oppdateringer.push('navn = ?'); verdier.push(navn); }
+        if (aktiv !== undefined) { oppdateringer.push('aktiv = ?'); verdier.push(aktiv ? 1 : 0); }
+        
+        if (!oppdateringer.length) return res.status(400).json({ feil: 'Ingen felter å oppdatere' });
+        
+        verdier.push(req.params.id);
+        await db.run(`UPDATE priser SET ${oppdateringer.join(', ')} WHERE id = ?`, verdier);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Legg til nytt tillegg eller transport
+router.post('/pris', async (req, res) => {
+    try {
+        const { id, type, navn, pris } = req.body;
+        if (!id || !type || !navn || pris === undefined) {
+            return res.status(400).json({ feil: 'Mangler felter (id, type, navn, pris)' });
+        }
+        if (!['tillegg', 'transport'].includes(type)) {
+            return res.status(400).json({ feil: 'Kun tillegg og transport kan opprettes her' });
+        }
+        const db = getDb();
+        await db.run(`INSERT INTO priser (id, type, navn, pris) VALUES (?, ?, ?, ?)`,
+            [id, type, navn, Math.round(pris)]);
+        res.json({ ok: true });
+    } catch (error) {
+        if (error.message.includes('UNIQUE')) {
+            return res.status(409).json({ feil: 'En pris med dette ID-et finnes allerede' });
+        }
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Slett tillegg eller transport (ikke leie/meta)
+router.delete('/pris/:id', async (req, res) => {
+    try {
+        const db = getDb();
+        const pris = await db.get(`SELECT * FROM priser WHERE id = ?`, [req.params.id]);
+        if (!pris) return res.status(404).json({ feil: 'Ikke funnet' });
+        if (!['tillegg', 'transport'].includes(pris.type)) {
+            return res.status(400).json({ feil: 'Kan ikke slette leie- eller meta-priser' });
+        }
+        await db.run(`DELETE FROM priser WHERE id = ?`, [req.params.id]);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Hent alle kunder med statistikk
 router.get('/kunder', async (req, res) => {
     try {
