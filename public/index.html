@@ -33,6 +33,75 @@
         }
         .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
 
+        /* Footer - enkel og diskret */
+        .footer {
+            background: #1a1a1a;
+            color: #999;
+            padding: 16px 20px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        .footer-tekst {
+            margin: 0;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .footer-lenke {
+            color: #ff5b24;
+            text-decoration: none;
+        }
+        .footer-lenke:hover {
+            color: #ff7d4d;
+            text-decoration: underline;
+        }
+        .footer strong {
+            color: #fff;
+        }
+
+        /* Haugan med tooltip - viser telefonnummer på hover */
+        .haugan-lenke {
+            color: #999;
+            text-decoration: none;
+            border-bottom: 1px dotted #666;
+            cursor: pointer;
+            position: relative;
+        }
+        .haugan-lenke:hover {
+            color: #fff;
+            border-bottom-color: #ff5b24;
+        }
+        .haugan-lenke:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff5b24;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .haugan-lenke:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #ff5b24;
+            z-index: 10;
+        }
+        @media (max-width: 600px) {
+            .footer-tekst {
+                font-size: 0.78rem;
+            }
+        }
+
         /* Hero-banner */
         .hero {
             position: relative;
@@ -560,6 +629,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-tekst">
+            <strong>Norvetuva Nord AS</strong> · 
+            <a href="tel:+4791649192" class="footer-lenke">📞 +47 91 64 91 92</a> · 
+            Laget av <a href="tel:+4799101041" class="haugan-lenke" title="+47 99 10 10 41">Haugan</a>
+        </p>
+    </footer>
 
     <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) lukkModal()">
