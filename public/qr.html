@@ -166,7 +166,7 @@
 
                 <div class="felt">
                     <label>Kontaktinfo nederst</label>
-                    <input type="text" id="kontaktInput" placeholder="Spørsmål: 91234567">
+                    <input type="text" id="kontaktInput" value="Spørsmål: +47 91 64 91 92" oninput="oppdater()">
                 </div>
 
                 <div class="felt">
@@ -211,15 +211,8 @@
         }
 
         async function lastKontakt() {
-            try {
-                const res = await fetch('/api/info/kontakt');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.telefon) {
-                        document.getElementById('kontaktInput').value = `Spørsmål: ${data.telefon}`;
-                    }
-                }
-            } catch (e) { /* */ }
+            // Hardkodet kontaktnummer for Norvetuva Nord AS
+            document.getElementById('kontaktInput').value = 'Spørsmål: +47 91 64 91 92';
         }
 
         async function oppdater() {
