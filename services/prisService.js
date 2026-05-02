@@ -1,23 +1,51 @@
-// services/prisService.js - Prisberegning
+// services/prisService.js - Prisberegning fra database
 const config = require('../config/config');
 
-/**
- * Beregner leiepris basert på antall dager.
- * Velger den billigste kombinasjonen for kunden, men sikrer at lengre
- * periode aldri er billigere enn kortere periode (monotonisk prising).
- */
-function beregnLeiepris(antallDager) {
-    const { kategorier, prisPerEkstraDag } = config.priser;
+// Hent priser fra database (med fallback til config)
+async function hentPriser() {
+    try {
+        const { getDb } = require('../db/database');
+        const db = getDb();
+        const rader = await db.all(`SELECT * FROM priser WHERE aktiv = 1 ORDER BY sortering, id`);
+        
+        if (!rader.length) return null;
+        
+        const kategorier = rader
+            .filter(r => r.type === 'leie' && r.dager)
+            .map(r => ({ dager: r.dager, navn: r.navn, pris: r.pris }));
+        
+        const prisPerEkstraDag = rader.find(r => r.id === 'leie_ekstra')?.pris 
+            || config.priser.prisPerEkstraDag;
+
+        const tillegg = rader
+            .filter(r => r.type === 'tillegg')
+            .map(r => ({ id: r.id, navn: r.navn, pris: r.pris }));
+
+        const transport = rader
+            .filter(r => r.type === 'transport')
+            .map(r => ({ id: r.id, navn: r.navn, pris: r.pris }));
+
+        const depositum = rader.find(r => r.id === 'depositum')?.pris 
+            || config.priser.depositum;
+        
+        const mvaSats = rader.find(r => r.id === 'mva_sats')?.pris 
+            || config.priser.mvaSats;
+
+        return { kategorier, prisPerEkstraDag, tillegg, transport, depositum, mvaSats };
+    } catch (e) {
+        console.warn('Kunne ikke lese priser fra database, bruker config:', e.message);
+        return null;
+    }
+}
+
+function beregnLeiepris(antallDager, priser) {
+    const { kategorier, prisPerEkstraDag } = priser;
     const sortert = [...kategorier].sort((a, b) => a.dager - b.dager);
     const stoersteKat = sortert[sortert.length - 1];
 
-    // Eksakt match
     const eksakt = sortert.find(k => k.dager === antallDager);
-    if (eksakt) {
-        return { pris: eksakt.pris, kategori: eksakt.navn, antallDager };
-    }
+    if (eksakt) return { pris: eksakt.pris, kategori: eksakt.navn, antallDager };
 
-    // Lengre enn største kategori
     if (antallDager > stoersteKat.dager) {
         const ekstra = antallDager - stoersteKat.dager;
         return {
@@ -27,14 +55,9 @@ function beregnLeiepris(antallDager) {
         };
     }
 
-    // Mellom kategorier - bygg på fra NÆRMESTE mindre kategori
-    // (ikke nødvendigvis billigste, fordi det skaper rare hopp)
     const naermesteMindre = [...sortert].reverse().find(k => k.dager < antallDager);
-    
-    // Alternativer
     const muligheter = [];
-    
-    // Alt 1: Bygg på fra nærmeste mindre kategori
+
     if (naermesteMindre) {
         const ekstra = antallDager - naermesteMindre.dager;
         muligheter.push({
@@ -44,7 +67,6 @@ function beregnLeiepris(antallDager) {
         });
     }
 
-    // Alt 2: Neste kategori opp (kan være billigere f.eks 3 dager til ukepris)
     const nesteOpp = sortert.find(k => k.dager > antallDager);
     if (nesteOpp) {
         muligheter.push({
@@ -54,43 +76,31 @@ function beregnLeiepris(antallDager) {
         });
     }
 
-    // Velg billigste
-    return muligheter.reduce((best, curr) => 
-        !best || curr.pris < best.pris ? curr : best
-    , null);
+    return muligheter.reduce((best, curr) =>
+        !best || curr.pris < best.pris ? curr : best, null);
 }
 
-/**
- * Beregner total pris inkludert tillegg og transport.
- * @param {Object} input
- * @param {number} input.antallDager
- * @param {string[]} input.tilleggIds - id-er fra config.priser.tillegg
- * @param {string[]} input.transportIds - id-er fra config.priser.transport  
- * @returns {Object} - detaljert prisoversikt
- */
-function beregnTotalpris({ antallDager, tilleggIds = [], transportIds = [] }) {
-    const leie = beregnLeiepris(antallDager);
+async function beregnTotalpris({ antallDager, tilleggIds = [], transportIds = [] }) {
+    const dbPriser = await hentPriser();
+    const priser = dbPriser || config.priser;
 
-    // Tillegg per døgn
+    const leie = beregnLeiepris(antallDager, priser);
+
     const tilleggLinjer = tilleggIds
-        .map(id => config.priser.tillegg.find(t => t.id === id))
+        .map(id => priser.tillegg.find(t => t.id === id))
         .filter(Boolean)
-        .map(t => ({
-            navn: `${t.navn} (${antallDager} døgn)`,
-            pris: t.pris * antallDager
-        }));
+        .map(t => ({ navn: `${t.navn} (${antallDager} døgn)`, pris: t.pris * antallDager }));
 
-    // Transport - engangskostnad
     const transportLinjer = transportIds
-        .map(id => config.priser.transport.find(t => t.id === id))
+        .map(id => priser.transport.find(t => t.id === id))
         .filter(Boolean)
         .map(t => ({ navn: t.navn, pris: t.pris }));
 
-    const sumEksMva = leie.pris 
+    const sumEksMva = leie.pris
         + tilleggLinjer.reduce((s, l) => s + l.pris, 0)
         + transportLinjer.reduce((s, l) => s + l.pris, 0);
-    
-    const mvaBeloep = Math.round(sumEksMva * config.priser.mvaSats / 100);
+
+    const mvaBeloep = Math.round(sumEksMva * priser.mvaSats / 100);
     const sumInkMva = sumEksMva + mvaBeloep;
 
     return {
@@ -99,12 +109,48 @@ function beregnTotalpris({ antallDager, tilleggIds = [], transportIds = [] }) {
         tillegg: tilleggLinjer,
         transport: transportLinjer,
         sumEksMva,
-        mvaSats: config.priser.mvaSats,
+        mvaSats: priser.mvaSats,
         mvaBeloep,
         sumInkMva,
-        depositum: config.priser.depositum,
-        depositumInkMva: config.priser.depositum + Math.round(config.priser.depositum * config.priser.mvaSats / 100)
+        depositum: priser.depositum,
+        depositumInkMva: priser.depositum + Math.round(priser.depositum * priser.mvaSats / 100)
     };
 }
 
-module.exports = { beregnLeiepris, beregnTotalpris };
+// Synkron versjon for bakoverkompatibilitet (bruker config direkte)
+function beregnTotalprisSync({ antallDager, tilleggIds = [], transportIds = [] }) {
+    const priser = config.priser;
+    const leie = beregnLeiepris(antallDager, priser);
+
+    const tilleggLinjer = tilleggIds
+        .map(id => priser.tillegg.find(t => t.id === id))
+        .filter(Boolean)
+        .map(t => ({ navn: `${t.navn} (${antallDager} døgn)`, pris: t.pris * antallDager }));
+
+    const transportLinjer = transportIds
+        .map(id => priser.transport.find(t => t.id === id))
+        .filter(Boolean)
+        .map(t => ({ navn: t.navn, pris: t.pris }));
+
+    const sumEksMva = leie.pris
+        + tilleggLinjer.reduce((s, l) => s + l.pris, 0)
+        + transportLinjer.reduce((s, l) => s + l.pris, 0);
+
+    const mvaBeloep = Math.round(sumEksMva * priser.mvaSats / 100);
+    const sumInkMva = sumEksMva + mvaBeloep;
+
+    return {
+        antallDager,
+        leie: { navn: leie.kategori, pris: leie.pris },
+        tillegg: tilleggLinjer,
+        transport: transportLinjer,
+        sumEksMva,
+        mvaSats: priser.mvaSats,
+        mvaBeloep,
+        sumInkMva,
+        depositum: priser.depositum,
+        depositumInkMva: priser.depositum + Math.round(priser.depositum * priser.mvaSats / 100)
+    };
+}
+
+module.exports = { beregnLeiepris, beregnTotalpris, beregnTotalprisSync, hentPriser };
