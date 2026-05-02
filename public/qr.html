@@ -187,7 +187,7 @@
                 <div class="lapp" id="lapp">
                     <div class="lapp-tittel" id="lappTittel">Volvo EC20E</div>
                     <div class="lapp-undertittel" id="lappUndertittel">Skann for info og hjelp</div>
-                    <canvas id="qrCanvas"></canvas>
+                    <div id="qrContainer" style="display:flex; justify-content:center; margin: 0 auto 12px;"></div>
                     <div class="lapp-instr">Skann med kameraet på telefonen</div>
                     <div class="lapp-kontakt" id="lappKontakt"></div>
                 </div>
@@ -200,13 +200,14 @@
         </div>
     </div>
 
-    <!-- QR-bibliotek (qrcode.js, ~5KB) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- QR-bibliotek fra cdnjs (tillatt) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <script>
+        let qrKode = null;
+
         function settStandardUrl() {
-            const baseUrl = window.location.origin;
-            document.getElementById('urlInput').value = baseUrl + '/info.html';
+            document.getElementById('urlInput').value = 'https://nvnord.no/info.html';
         }
 
         async function lastKontakt() {
@@ -223,10 +224,8 @@
 
         async function oppdater() {
             const url = document.getElementById('urlInput').value.trim();
-            if (!url) {
-                alert('Sett URL først');
-                return;
-            }
+            if (!url) { alert('Sett URL først'); return; }
+
             const tittel = document.getElementById('tittelInput').value;
             const undertittel = document.getElementById('undertittelInput').value;
             const kontakt = document.getElementById('kontaktInput').value;
@@ -236,16 +235,18 @@
             document.getElementById('lappUndertittel').textContent = undertittel;
             document.getElementById('lappKontakt').textContent = kontakt;
 
-            const canvas = document.getElementById('qrCanvas');
+            // Tøm og lag ny QR-kode
+            const container = document.getElementById('qrContainer');
+            container.innerHTML = '';
+
             try {
-                await QRCode.toCanvas(canvas, url, {
+                qrKode = new QRCode(container, {
+                    text: url,
                     width: storelse,
-                    margin: 2,
-                    errorCorrectionLevel: 'M',
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
+                    height: storelse,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
                 });
             } catch (err) {
                 alert('Feil ved generering: ' + err.message);
@@ -253,10 +254,11 @@
         }
 
         function lastNed() {
-            const canvas = document.getElementById('qrCanvas');
+            const img = document.querySelector('#qrContainer img');
+            if (!img) { alert('Generer QR-kode først'); return; }
             const lenke = document.createElement('a');
-            lenke.download = 'qr-volvo-ec20e.png';
-            lenke.href = canvas.toDataURL('image/png');
+            lenke.download = 'qr-nvnord.png';
+            lenke.href = img.src;
             lenke.click();
         }
 
