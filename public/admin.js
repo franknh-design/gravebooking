@@ -79,17 +79,18 @@
             const data = await res.json();
 
             const stats = [
-                { label: 'Totalt', verdi: data.totalBookinger || 0, klasse: '' },
-                { label: 'Venter faktura', verdi: data.venterFaktura || 0, klasse: 'info' },
-                { label: 'Venter godkjenning', verdi: data.venterGodkjenning || 0, klasse: 'warning' },
-                { label: 'Aktive', verdi: data.aktive || 0, klasse: 'success' },
-                { label: 'Venter retur', verdi: data.venterRetur || 0, klasse: 'warning' },
-                { label: 'Fullført', verdi: data.fullfoerte || 0, klasse: 'info' },
-                { label: 'Omsetning', verdi: ((data.totalOmsetning || 0)).toLocaleString('nb-NO') + ' kr', klasse: '' }
+                { label: 'Totalt', verdi: data.totalBookinger || 0, klasse: '', filter: 'alle' },
+                { label: 'Venter faktura', verdi: data.venterFaktura || 0, klasse: 'info', filter: 'venter_faktura,venter_betaling' },
+                { label: 'Venter godkjenning', verdi: data.venterGodkjenning || 0, klasse: 'warning', filter: 'venter_godkjenning' },
+                { label: 'Aktive', verdi: data.aktive || 0, klasse: 'success', filter: 'godkjent,aktiv' },
+                { label: 'Venter retur', verdi: data.venterRetur || 0, klasse: 'warning', filter: 'venter_godkjenning_retur' },
+                { label: 'Fullført', verdi: data.fullfoerte || 0, klasse: 'info', filter: 'fullfoert' },
+                { label: 'Omsetning', verdi: ((data.totalOmsetning || 0)).toLocaleString('nb-NO') + ' kr', klasse: '', filter: null }
             ];
 
             document.getElementById('statistikkRad').innerHTML = stats.map(s => `
-                <div class="stat-kort">
+                <div class="stat-kort ${s.filter ? 'stat-klikkbar' : ''}" 
+                     ${s.filter ? `onclick="settFilter('${s.filter}')" title="Filtrer på ${s.label}"` : ''}>
                     <div class="stat-tall ${s.klasse}">${s.verdi}</div>
                     <div class="stat-label">${s.label}</div>
                 </div>

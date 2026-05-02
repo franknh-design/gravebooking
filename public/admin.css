@@ -96,6 +96,15 @@ body {
     border-radius: 10px;
     border: 1px solid var(--border);
 }
+.stat-klikkbar {
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.stat-klikkbar:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
 .stat-tall {
     font-size: 1.6rem;
     font-weight: 700;
