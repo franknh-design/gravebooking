@@ -11,18 +11,37 @@ const inspeksjonService = require('../services/inspeksjonService');
 const config = require('../config/config');
 
 // Hent maskinkonfig og prismatrise (for frontend)
-router.get('/konfig', (req, res) => {
-    res.json({
-        maskin: config.maskin,
-        priser: {
-            kategorier: config.priser.kategorier,
-            prisPerEkstraDag: config.priser.prisPerEkstraDag,
-            tillegg: config.priser.tillegg,
-            transport: config.priser.transport,
-            depositum: config.priser.depositum,
-            mvaSats: config.priser.mvaSats
-        }
-    });
+router.get('/konfig', async (req, res) => {
+    try {
+        const { hentPriser } = require('../services/prisService');
+        const dbPriser = await hentPriser();
+        const priser = dbPriser || config.priser;
+
+        res.json({
+            maskin: config.maskin,
+            priser: {
+                kategorier: priser.kategorier,
+                prisPerEkstraDag: priser.prisPerEkstraDag,
+                tillegg: priser.tillegg,
+                transport: priser.transport,
+                depositum: priser.depositum,
+                mvaSats: priser.mvaSats
+            }
+        });
+    } catch (e) {
+        // Fallback til config hvis database feiler
+        res.json({
+            maskin: config.maskin,
+            priser: {
+                kategorier: config.priser.kategorier,
+                prisPerEkstraDag: config.priser.prisPerEkstraDag,
+                tillegg: config.priser.tillegg,
+                transport: config.priser.transport,
+                depositum: config.priser.depositum,
+                mvaSats: config.priser.mvaSats
+            }
+        });
+    }
 });
 
 // Beregn pris for valgt periode og tillegg
