@@ -120,7 +120,7 @@
                     <div class="booking-info">
                         <div class="booking-tittel">${b.kundeNavn}</div>
                         <div class="booking-meta">
-                            <span class="booking-meta-item">${b.startDato} → ${b.sluttDato}</span>
+                            <span class="booking-meta-item">${fmt(b.startDato)} → ${fmt(b.sluttDato)}</span>
                             <span class="booking-meta-item">${b.antallDager} dag${b.antallDager > 1 ? 'er' : ''}</span>
                             <span class="status-pille status-${b.status}">${formaterStatus(b.status)}</span>
                             ${tillegg ? '<span>• tillegg</span>' : ''}
@@ -198,7 +198,7 @@
 
             <div class="detalj-seksjon">
                 <h3>Booking</h3>
-                <div class="detalj-rad"><span class="label">Periode:</span><span class="verdi">${b.startDato} → ${b.sluttDato} (${b.antallDager} dag${b.antallDager > 1 ? 'er' : ''})</span></div>
+                <div class="detalj-rad"><span class="label">Periode:</span><span class="verdi">${fmt(b.startDato)} → ${fmt(b.sluttDato)} (${b.antallDager} dag${b.antallDager > 1 ? 'er' : ''})</span></div>
                 <div class="detalj-rad"><span class="label">Tillegg:</span><span class="verdi">${tillegg}</span></div>
                 <div class="detalj-rad"><span class="label">Transport:</span><span class="verdi">${transport}</span></div>
                 ${b.transportAdresse ? `<div class="detalj-rad"><span class="label">Adresse:</span><span class="verdi">${b.transportAdresse}</span></div>` : ''}
@@ -694,7 +694,7 @@
                              onclick="lukkKundeDetalj(); visDetaljer('${b.ordreId}');">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 <div>
-                                    <strong>${b.startDato} → ${b.sluttDato}</strong>
+                                    <strong>${fmt(b.startDato)} → ${fmt(b.sluttDato)}</strong>
                                     <span class="status-pille status-${b.status}" style="margin-left:6px;">${formaterStatus(b.status)}</span>
                                 </div>
                                 <div>${b.totalPris.toLocaleString('nb-NO')} kr</div>
@@ -777,6 +777,12 @@
         const [y, m, d] = iso.split('-');
         const maaneder = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
         return `${parseInt(d)}. ${maaneder[parseInt(m)-1]} ${y}`;
+    }
+
+    function fmt(iso) {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-');
+        return `${d}.${m}.${y}`;
     }
 
     function isoDato(date) {
