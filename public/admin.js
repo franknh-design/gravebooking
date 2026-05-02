@@ -453,6 +453,14 @@
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
+    // ----- Hjelp -----
+    window.visHjelp = function() {
+        document.getElementById('hjelpModal').classList.add('synlig');
+    };
+    window.lukkHjelp = function() {
+        document.getElementById('hjelpModal').classList.remove('synlig');
+    };
+
     // ----- Eksport -----
     window.visEksport = function() {
         // Sett standard datoer: første dag i inneværende måned til i dag

@@ -23,6 +23,7 @@
         <header class="topbar">
             <h1>Gravebooking Admin</h1>
             <div class="topbar-actions">
+                <button class="btn-tekst" onclick="visHjelp()">?</button>
                 <button class="btn-tekst" onclick="visPriser()">Priser</button>
                 <button class="btn-tekst" onclick="visKunder()">Kunder</button>
                 <button class="btn-tekst" onclick="visBlokker()">Blokker datoer</button>
@@ -54,6 +55,81 @@
     <div class="modal-overlay" id="detaljModal" onclick="if(event.target===this) lukkDetalj()">
         <div class="modal-innhold detalj-modal">
             <div id="detaljInnhold"></div>
+        </div>
+    </div>
+
+    <!-- Hjelp modal -->
+    <div class="modal-overlay" id="hjelpModal" onclick="if(event.target===this) lukkHjelp()">
+        <div class="modal-innhold hjelp-modal">
+            <div class="detalj-header">
+                <div class="detalj-tittel">Hjelp og veiledning</div>
+                <button class="lukk-btn" onclick="lukkHjelp()">×</button>
+            </div>
+            <div class="hjelp-grid">
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-gul">📋</div>
+                        <span class="hjelp-kort-tittel">Ny booking kommer inn</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Kunden booker og betaler med Vipps. Bookingen får status "Venter godkjenning". Klikk på bookingen og trykk "Godkjenn" for å sende kode til kunden.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-blaa">🔑</div>
+                        <span class="hjelp-kort-tittel">Kunde har glemt koden</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Åpne bookingen og klikk "Send kode på SMS". Kunden får koden på nytt. Hvis koden er kompromittert, klikk "Lag ny kode" i stedet.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-gronn">✓</div>
+                        <span class="hjelp-kort-tittel">Maskin er tilbake</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Kunden leverer og tar bilder via lenken i SMS. Bookingen går til "Venter retur". Sjekk bildene og klikk "Godkjenn retur".</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-oransje">📅</div>
+                        <span class="hjelp-kort-tittel">Blokker datoer</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Skal maskinen på service eller er den ikke tilgjengelig? Klikk "Blokker datoer" og velg periode. Kunder kan ikke booke disse dagene.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-lilla">👤</div>
+                        <span class="hjelp-kort-tittel">Problemkunde</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Gå til "Kunder", finn kunden og klikk "Blokker kunde". Skriv inn grunnen. Kunden vil ikke kunne booke igjen.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-graa">💰</div>
+                        <span class="hjelp-kort-tittel">Faktura-bestilling</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Bedriftskunde ber om faktura. Klikk "Marker faktura sendt" når du har sendt den fra regnskapsprogrammet. Klikk "Betalt" når pengene er på konto.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-gronn">kr</div>
+                        <span class="hjelp-kort-tittel">Endre priser</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Klikk "Priser" i topbaren. Endre et tall og klikk utenfor feltet – lagres automatisk. Gjelder kun nye bookinger.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-blaa">📊</div>
+                        <span class="hjelp-kort-tittel">Statistikk-boksene</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Klikk på en statistikk-boks øverst for å filtrere listen. Klikk "Alle" for å nullstille filteret.</p>
+                </div>
+                <div class="hjelp-kort">
+                    <div class="hjelp-kort-topp">
+                        <div class="hjelp-ikon hjelp-oransje">⚠</div>
+                        <span class="hjelp-kort-tittel">Skade på maskinen</span>
+                    </div>
+                    <p class="hjelp-kort-tekst">Åpne en aktiv booking og klikk "Registrer skade". Beskriv skaden – den lagres på bookingen og kunden varsles på SMS.</p>
+                </div>
+            </div>
         </div>
     </div>
 

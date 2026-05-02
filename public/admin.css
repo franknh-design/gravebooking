@@ -606,3 +606,52 @@ body {
     padding: 4px 10px;
     font-size: 0.8rem;
 }
+
+/* Hjelp-modal */
+.hjelp-modal { max-width: 780px; }
+
+.hjelp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+.hjelp-kort {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.hjelp-kort-topp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.hjelp-ikon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    font-weight: 600;
+}
+.hjelp-oransje { background: #fff0e8; }
+.hjelp-blaa    { background: #e6f1fb; }
+.hjelp-gronn   { background: #eaf3de; color: #3b6d11; }
+.hjelp-gul     { background: #faeeda; }
+.hjelp-lilla   { background: #eeedfe; }
+.hjelp-graa    { background: #f1efe8; }
+.hjelp-kort-tittel {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.hjelp-kort-tekst {
+    font-size: 0.85rem;
+    color: var(--tekst-muted);
+    line-height: 1.55;
+    margin: 0;
+}
