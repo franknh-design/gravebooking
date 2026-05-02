@@ -23,6 +23,7 @@
         <header class="topbar">
             <h1>Gravebooking Admin</h1>
             <div class="topbar-actions">
+                <button class="btn-tekst" onclick="visPriser()">Priser</button>
                 <button class="btn-tekst" onclick="visKunder()">Kunder</button>
                 <button class="btn-tekst" onclick="visBlokker()">Blokker datoer</button>
                 <a href="/qr.html" class="btn-tekst">QR-kode</a>
@@ -53,6 +54,17 @@
     <div class="modal-overlay" id="detaljModal" onclick="if(event.target===this) lukkDetalj()">
         <div class="modal-innhold detalj-modal">
             <div id="detaljInnhold"></div>
+        </div>
+    </div>
+
+    <!-- Priser modal -->
+    <div class="modal-overlay" id="priserModal" onclick="if(event.target===this) lukkPriser()">
+        <div class="modal-innhold priser-modal">
+            <div class="detalj-header">
+                <div class="detalj-tittel">Priser</div>
+                <button class="lukk-btn" onclick="lukkPriser()">×</button>
+            </div>
+            <div id="priserInnhold"></div>
         </div>
     </div>
 

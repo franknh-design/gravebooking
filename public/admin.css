@@ -536,3 +536,64 @@ body {
     resize: vertical;
     min-height: 60px;
 }
+
+/* Priser-panel */
+.priser-modal { max-width: 640px; }
+
+.pris-seksjon {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+.pris-seksjon:last-of-type { border-bottom: none; }
+.pris-seksjon h3 {
+    font-size: 0.85rem;
+    color: var(--tekst-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.pris-redigerings-rad {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--hover);
+    gap: 16px;
+}
+.pris-redigerings-rad:last-child { border-bottom: none; }
+
+.pris-navn {
+    font-size: 0.95rem;
+    font-weight: 500;
+    flex: 1;
+}
+.pris-input-gruppe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.pris-input {
+    width: 100px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    text-align: right;
+    font-family: inherit;
+}
+.pris-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+.pris-enhet {
+    font-size: 0.85rem;
+    color: var(--tekst-muted);
+    min-width: 70px;
+}
+.action-btn.liten {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}

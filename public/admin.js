@@ -452,6 +452,132 @@
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
+    // ----- Priser -----
+    window.visPriser = async function() {
+        document.getElementById('priserModal').classList.add('synlig');
+        await lastPriser();
+    };
+
+    window.lukkPriser = function() {
+        document.getElementById('priserModal').classList.remove('synlig');
+    };
+
+    async function lastPriser() {
+        try {
+            const res = await api('/api/admin/priser');
+            const priser = await res.json();
+            renderPriser(priser);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderPriser(priser) {
+        const leie = priser.filter(p => p.type === 'leie' && p.dager);
+        const ekstra = priser.find(p => p.id === 'leie_ekstra');
+        const tillegg = priser.filter(p => p.type === 'tillegg');
+        const transport = priser.filter(p => p.type === 'transport');
+        const depositum = priser.find(p => p.id === 'depositum');
+        const mva = priser.find(p => p.id === 'mva_sats');
+
+        const prisRad = (p, enhet = 'kr eks mva') => `
+            <div class="pris-redigerings-rad" data-id="${p.id}">
+                <span class="pris-navn">${p.navn}</span>
+                <div class="pris-input-gruppe">
+                    <input type="number" class="pris-input" value="${p.pris}" min="0" 
+                        onchange="oppdaterPris('${p.id}', this.value)">
+                    <span class="pris-enhet">${enhet}</span>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('priserInnhold').innerHTML = `
+            <div class="pris-seksjon">
+                <h3>Leiepriser (eks mva)</h3>
+                ${leie.map(p => prisRad(p)).join('')}
+                ${ekstra ? prisRad(ekstra) : ''}
+            </div>
+
+            <div class="pris-seksjon">
+                <h3>Tilleggsutstyr (per døgn, eks mva)</h3>
+                ${tillegg.map(p => `
+                    <div class="pris-redigerings-rad" data-id="${p.id}">
+                        <span class="pris-navn">${p.navn}</span>
+                        <div class="pris-input-gruppe">
+                            <input type="number" class="pris-input" value="${p.pris}" min="0"
+                                onchange="oppdaterPris('${p.id}', this.value)">
+                            <span class="pris-enhet">kr/døgn</span>
+                            <button class="action-btn danger liten" onclick="slettPris('${p.id}')">Slett</button>
+                        </div>
+                    </div>
+                `).join('')}
+                <button class="action-btn tekst" onclick="leggTilTillegg()" style="margin-top:8px;">+ Legg til tillegg</button>
+            </div>
+
+            <div class="pris-seksjon">
+                <h3>Bringing og henting (per gang, eks mva)</h3>
+                ${transport.map(p => prisRad(p, 'kr/gang')).join('')}
+            </div>
+
+            <div class="pris-seksjon">
+                <h3>Andre innstillinger</h3>
+                ${depositum ? prisRad(depositum, 'kr eks mva') : ''}
+                ${mva ? `
+                    <div class="pris-redigerings-rad">
+                        <span class="pris-navn">MVA-sats</span>
+                        <div class="pris-input-gruppe">
+                            <input type="number" class="pris-input" value="${mva.pris}" min="0" max="100"
+                                onchange="oppdaterPris('${mva.id}', this.value)">
+                            <span class="pris-enhet">%</span>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+
+            <div style="background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #795548; margin-top: 8px;">
+                ⚠️ Prisendringer gjelder kun for nye bookinger. Eksisterende bookinger beholder opprinnelig pris.
+            </div>
+        `;
+    }
+
+    window.oppdaterPris = async function(id, verdi) {
+        try {
+            const res = await api(`/api/admin/pris/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ pris: Number(verdi) })
+            });
+            const data = await res.json();
+            if (!res.ok) alert('Feil: ' + data.feil);
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.slettPris = async function(id) {
+        if (!confirm('Slette dette tillegget?')) return;
+        try {
+            const res = await api(`/api/admin/pris/${id}`, { method: 'DELETE' });
+            if (res.ok) lastPriser();
+            else {
+                const d = await res.json();
+                alert('Feil: ' + d.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.leggTilTillegg = async function() {
+        const navn = prompt('Navn på tillegg:');
+        if (!navn) return;
+        const pris = prompt('Pris per døgn (eks mva):');
+        if (!pris || isNaN(pris)) return;
+        const id = navn.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        try {
+            const res = await api('/api/admin/pris', {
+                method: 'POST',
+                body: JSON.stringify({ id, type: 'tillegg', navn, pris: Number(pris) })
+            });
+            const data = await res.json();
+            if (res.ok) lastPriser();
+            else alert('Feil: ' + data.feil);
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
     // ----- Kunder -----
     window.visKunder = function() {
         document.getElementById('kunderModal').classList.add('synlig');
