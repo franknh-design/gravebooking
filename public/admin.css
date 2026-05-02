@@ -74,14 +74,36 @@ body {
     position: sticky; top: 0; z-index: 50;
 }
 .topbar h1 { font-size: 1.1rem; }
-.topbar-actions { display: flex; gap: 12px; align-items: center; }
+.topbar-actions { display: flex; gap: 6px; align-items: center; }
 .btn-tekst {
-    background: none; border: none;
-    color: var(--info); cursor: pointer;
-    font-size: 0.9rem; text-decoration: none;
-    padding: 6px 10px; border-radius: 6px;
+    background: var(--hover);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
 }
-.btn-tekst:hover { background: var(--hover); }
+.btn-tekst:hover {
+    background: #e8e8e8;
+    border-color: #bbb;
+}
+.btn-tekst.hjelp-knapp {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    font-weight: 700;
+    padding: 6px 11px;
+}
+.btn-tekst.hjelp-knapp:hover {
+    background: var(--primary-mork);
+    border-color: var(--primary-mork);
+}
 
 /* Statistikk */
 .statistikk-rad {
