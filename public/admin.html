@@ -27,7 +27,7 @@
                 <button class="btn-tekst" onclick="visKunder()">Kunder</button>
                 <button class="btn-tekst" onclick="visBlokker()">Blokker datoer</button>
                 <a href="/qr.html" class="btn-tekst">QR-kode</a>
-                <a href="/api/admin/eksport.csv?token=" id="eksportLenke" class="btn-tekst">Eksporter CSV</a>
+                <button class="btn-tekst" onclick="visEksport()">Eksporter CSV</button>
                 <button class="btn-tekst" onclick="loggUt()">Logg ut</button>
             </div>
         </header>
@@ -54,6 +54,47 @@
     <div class="modal-overlay" id="detaljModal" onclick="if(event.target===this) lukkDetalj()">
         <div class="modal-innhold detalj-modal">
             <div id="detaljInnhold"></div>
+        </div>
+    </div>
+
+    <!-- Eksport modal -->
+    <div class="modal-overlay" id="eksportModal" onclick="if(event.target===this) lukkEksport()">
+        <div class="modal-innhold" style="max-width:480px;">
+            <div class="detalj-header">
+                <div class="detalj-tittel">Eksporter CSV</div>
+                <button class="lukk-btn" onclick="lukkEksport()">×</button>
+            </div>
+
+            <div class="felt" style="margin-bottom:14px;">
+                <label>Fra dato</label>
+                <input type="date" id="eksportFra" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:inherit;">
+            </div>
+            <div class="felt" style="margin-bottom:14px;">
+                <label>Til dato</label>
+                <input type="date" id="eksportTil" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:inherit;">
+            </div>
+            <div class="felt" style="margin-bottom:20px;">
+                <label>Status (valgfritt)</label>
+                <select id="eksportStatus" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:inherit;">
+                    <option value="">Alle statuser</option>
+                    <option value="fullfoert">Fullført</option>
+                    <option value="aktiv">Aktiv</option>
+                    <option value="godkjent">Godkjent</option>
+                    <option value="venter_godkjenning">Venter godkjenning</option>
+                    <option value="venter_betaling">Venter betaling</option>
+                    <option value="venter_faktura">Venter faktura</option>
+                    <option value="avbrutt">Avbrutt</option>
+                </select>
+            </div>
+
+            <div style="font-size:0.85rem;color:var(--tekst-muted);margin-bottom:16px;">
+                La datoer stå tomme for å eksportere alle bookinger.
+            </div>
+
+            <div class="actions-rad">
+                <button class="action-btn primary" onclick="lastNedEksport()">Last ned CSV</button>
+                <button class="action-btn tekst" onclick="lukkEksport()">Avbryt</button>
+            </div>
         </div>
     </div>
 

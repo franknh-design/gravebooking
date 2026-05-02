@@ -453,6 +453,36 @@
         } catch (e) { alert('Feil: ' + e.message); }
     };
 
+    // ----- Eksport -----
+    window.visEksport = function() {
+        // Sett standard datoer: første dag i inneværende måned til i dag
+        const nå = new Date();
+        const førsteDag = new Date(nå.getFullYear(), nå.getMonth(), 1);
+        document.getElementById('eksportFra').value = førsteDag.toISOString().split('T')[0];
+        document.getElementById('eksportTil').value = nå.toISOString().split('T')[0];
+        document.getElementById('eksportStatus').value = '';
+        document.getElementById('eksportModal').classList.add('synlig');
+    };
+
+    window.lukkEksport = function() {
+        document.getElementById('eksportModal').classList.remove('synlig');
+    };
+
+    window.lastNedEksport = function() {
+        const fra = document.getElementById('eksportFra').value;
+        const til = document.getElementById('eksportTil').value;
+        const status = document.getElementById('eksportStatus').value;
+        const token = adminToken;
+
+        const params = new URLSearchParams({ token });
+        if (fra) params.set('fra', fra);
+        if (til) params.set('til', til);
+        if (status) params.set('status', status);
+
+        window.location.href = `/api/admin/eksport.csv?${params.toString()}`;
+        lukkEksport();
+    };
+
     // ----- Priser -----
     window.visPriser = async function() {
         document.getElementById('priserModal').classList.add('synlig');
