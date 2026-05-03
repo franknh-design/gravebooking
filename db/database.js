@@ -74,6 +74,16 @@ async function initDatabase() {
             notater TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS innstillinger (
+            nokkel TEXT PRIMARY KEY,
+            verdi TEXT NOT NULL,
+            oppdatert TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Standardverdier
+        INSERT OR IGNORE INTO innstillinger (nokkel, verdi) VALUES ('vedlikehold_aktiv', '0');
+        INSERT OR IGNORE INTO innstillinger (nokkel, verdi) VALUES ('vedlikehold_melding', 'Siden er midlertidig nede for vedlikehold. Vi er snart tilbake!');
+
         CREATE TABLE IF NOT EXISTS priser (
             id TEXT PRIMARY KEY,
             type TEXT NOT NULL,
