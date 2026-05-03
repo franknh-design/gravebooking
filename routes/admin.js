@@ -18,6 +18,42 @@ function krevAdmin(req, res, next) {
 
 router.use(krevAdmin);
 
+// Hent vedlikeholdsstatus
+router.get('/vedlikehold', async (req, res) => {
+    try {
+        const db = getDb();
+        const aktiv = await db.get(`SELECT verdi FROM innstillinger WHERE nokkel = 'vedlikehold_aktiv'`);
+        const melding = await db.get(`SELECT verdi FROM innstillinger WHERE nokkel = 'vedlikehold_melding'`);
+        res.json({
+            aktiv: aktiv?.verdi === '1',
+            melding: melding?.verdi || ''
+        });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Slå vedlikehold av/på
+router.post('/vedlikehold', async (req, res) => {
+    try {
+        const { aktiv, melding } = req.body;
+        const db = getDb();
+        const ts = new Date().toISOString();
+        
+        await db.run(`UPDATE innstillinger SET verdi = ?, oppdatert = ? WHERE nokkel = 'vedlikehold_aktiv'`,
+            [aktiv ? '1' : '0', ts]);
+        
+        if (melding !== undefined) {
+            await db.run(`UPDATE innstillinger SET verdi = ?, oppdatert = ? WHERE nokkel = 'vedlikehold_melding'`,
+                [melding, ts]);
+        }
+
+        res.json({ ok: true, aktiv: !!aktiv });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Hent alle priser
 router.get('/priser', async (req, res) => {
     try {
