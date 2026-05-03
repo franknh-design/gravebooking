@@ -28,6 +28,7 @@
                 sessionStorage.setItem('adminToken', token);
                 skjulLogin();
                 lastData();
+                lastVedlikeholdStatus();
             } else {
                 document.getElementById('loginFeil').textContent = 'Feil token';
             }
@@ -452,6 +453,72 @@
             lastData();
         } catch (e) { alert('Feil: ' + e.message); }
     };
+
+    // ----- Vedlikehold -----
+    let vedlikeholdAktiv = false;
+
+    async function lastVedlikeholdStatus() {
+        try {
+            const res = await api('/api/admin/vedlikehold');
+            const data = await res.json();
+            vedlikeholdAktiv = data.aktiv;
+            oppdaterVedlikeholdKnapp();
+        } catch (e) { console.error(e); }
+    }
+
+    function oppdaterVedlikeholdKnapp() {
+        const knapp = document.getElementById('vedlikeholdKnapp');
+        if (!knapp) return;
+        if (vedlikeholdAktiv) {
+            knapp.textContent = '✓ Åpne siden igjen';
+            knapp.style.background = '#2d7a3a';
+            knapp.style.borderColor = '#2d7a3a';
+            knapp.style.color = 'white';
+        } else {
+            knapp.textContent = '⚙ Ta ned siden';
+            knapp.style.background = '';
+            knapp.style.borderColor = '';
+            knapp.style.color = '';
+        }
+    }
+
+    window.toggleVedlikehold = async function() {
+        if (vedlikeholdAktiv) {
+            if (!confirm('Åpne siden igjen for kunder?')) return;
+            await settVedlikehold(false, null);
+        } else {
+            const melding = prompt(
+                'Melding til besøkende (la stå tom for standard):',
+                'Vi er midlertidig nede for vedlikehold. Vi er snart tilbake!'
+            );
+            if (melding === null) return;
+            if (!confirm('Ta ned bookingsiden for kunder nå?')) return;
+            await settVedlikehold(true, melding || null);
+        }
+    };
+
+    async function settVedlikehold(aktiv, melding) {
+        try {
+            const body = { aktiv };
+            if (melding !== null) body.melding = melding;
+            const res = await api('/api/admin/vedlikehold', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                vedlikeholdAktiv = data.aktiv;
+                oppdaterVedlikeholdKnapp();
+                if (aktiv) {
+                    alert('Siden er nå tatt ned. Kunder vil se vedlikeholdsmelding.\n\nAdmin-panelet er fortsatt tilgjengelig for deg.');
+                } else {
+                    alert('Siden er åpnet igjen for kunder.');
+                }
+            } else {
+                alert('Feil: ' + data.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    }
 
     // ----- Hjelp -----
     window.visHjelp = function() {
