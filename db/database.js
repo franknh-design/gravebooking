@@ -91,7 +91,8 @@ async function initDatabase() {
             pris INTEGER NOT NULL,
             dager INTEGER,
             aktiv INTEGER DEFAULT 1,
-            sortering INTEGER DEFAULT 0
+            sortering INTEGER DEFAULT 0,
+            bilde TEXT
         );
 
         CREATE INDEX IF NOT EXISTS idx_priser_type ON priser(type);
@@ -147,6 +148,13 @@ async function initDatabase() {
         }
         
         console.log(`Migrert ${eksisterende.length} kunder fra eksisterende bookinger`);
+    }
+
+    // Migrering: legg til bilde-kolonne på priser hvis den mangler
+    const priserKolonner = await db.all(`PRAGMA table_info(priser)`);
+    if (!priserKolonner.some(k => k.name === 'bilde')) {
+        console.log('Migrerer database: legger til bilde-kolonne på priser...');
+        await db.exec(`ALTER TABLE priser ADD COLUMN bilde TEXT`);
     }
 
     // Migrering: fyll inn standardpriser fra config hvis tabellen er tom
