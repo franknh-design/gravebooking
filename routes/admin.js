@@ -6,6 +6,33 @@ const bookingRoutes = require('./booking');
 const inspeksjonService = require('../services/inspeksjonService');
 const smsService = require('../services/smsService');
 const config = require('../config/config');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Multer for tilleggs-bilder
+const tilleggStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, '../public/img/tillegg');
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, `${req.params.id}${ext}`);
+    }
+});
+const tilleggUpload = multer({
+    storage: tilleggStorage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+    fileFilter: (req, file, cb) => {
+        if (['image/jpeg','image/png','image/webp'].includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Kun JPG, PNG og WebP er tillatt'));
+        }
+    }
+});
 
 // Middleware: krever admin-token
 function krevAdmin(req, res, next) {
@@ -17,6 +44,39 @@ function krevAdmin(req, res, next) {
 }
 
 router.use(krevAdmin);
+
+// Last opp bilde for tillegg
+router.post('/pris/:id/bilde', krevAdmin, (req, res) => {
+    tilleggUpload.single('bilde')(req, res, async (err) => {
+        if (err) return res.status(400).json({ feil: err.message });
+        if (!req.file) return res.status(400).json({ feil: 'Ingen fil lastet opp' });
+
+        const bildeUrl = `/img/tillegg/${req.file.filename}`;
+        try {
+            const db = getDb();
+            await db.run(`UPDATE priser SET bilde = ? WHERE id = ?`, [bildeUrl, req.params.id]);
+            res.json({ ok: true, bilde: bildeUrl });
+        } catch (error) {
+            res.status(500).json({ feil: error.message });
+        }
+    });
+});
+
+// Slett bilde for tillegg
+router.delete('/pris/:id/bilde', krevAdmin, async (req, res) => {
+    try {
+        const db = getDb();
+        const pris = await db.get(`SELECT bilde FROM priser WHERE id = ?`, [req.params.id]);
+        if (pris?.bilde) {
+            const filsti = path.join(__dirname, '../public', pris.bilde);
+            if (fs.existsSync(filsti)) fs.unlinkSync(filsti);
+        }
+        await db.run(`UPDATE priser SET bilde = NULL WHERE id = ?`, [req.params.id]);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
 
 // Hent vedlikeholdsstatus
 router.get('/vedlikehold', async (req, res) => {
