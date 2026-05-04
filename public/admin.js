@@ -70,8 +70,6 @@
     // ----- Last og vis data -----
     async function lastData() {
         await Promise.all([lastStatistikk(), lastBookinger()]);
-        // Oppdater eksport-lenken med token
-        document.getElementById('eksportLenke').href = `/api/admin/eksport.csv?token=${encodeURIComponent(adminToken)}`;
     }
 
     async function lastStatistikk() {
