@@ -13,7 +13,7 @@ const fs = require('fs');
 // Multer for tilleggs-bilder
 const tilleggStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '../public/img/tillegg');
+        const dir = path.join(__dirname, '../img/tillegg');
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         cb(null, dir);
     },
@@ -68,7 +68,7 @@ router.delete('/pris/:id/bilde', krevAdmin, async (req, res) => {
         const db = getDb();
         const pris = await db.get(`SELECT bilde FROM priser WHERE id = ?`, [req.params.id]);
         if (pris?.bilde) {
-            const filsti = path.join(__dirname, '../public', pris.bilde);
+            const filsti = path.join(__dirname, '..', pris.bilde);
             if (fs.existsSync(filsti)) fs.unlinkSync(filsti);
         }
         await db.run(`UPDATE priser SET bilde = NULL WHERE id = ?`, [req.params.id]);

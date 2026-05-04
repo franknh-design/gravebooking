@@ -87,6 +87,7 @@ app.use(async (req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
 
 app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
