@@ -677,3 +677,34 @@ body {
     line-height: 1.55;
     margin: 0;
 }
+
+/* Tillegg-bilder */
+.tillegg-bilde-wrapper {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+.tillegg-miniatyr {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+.tillegg-miniatyr-tom {
+    width: 44px;
+    height: 44px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--tekst-muted);
+    background: var(--hover);
+}
+.tillegg-miniatyr-tom:hover {
+    border-color: var(--primary);
+    background: #fff5f0;
+}

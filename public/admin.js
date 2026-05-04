@@ -606,14 +606,24 @@
                 <h3>Tilleggsutstyr (per døgn, eks mva)</h3>
                 ${tillegg.map(p => `
                     <div class="pris-redigerings-rad" data-id="${p.id}">
+                        <div class="tillegg-bilde-wrapper">
+                            ${p.bilde 
+                                ? `<img src="${p.bilde}?t=${Date.now()}" class="tillegg-miniatyr" alt="${p.navn}">`
+                                : `<div class="tillegg-miniatyr-tom" onclick="lastOppBilde('${p.id}')" title="Last opp bilde">📷</div>`
+                            }
+                        </div>
                         <span class="pris-navn">${p.navn}</span>
                         <div class="pris-input-gruppe">
                             <input type="number" class="pris-input" value="${p.pris}" min="0"
                                 onchange="oppdaterPris('${p.id}', this.value)">
                             <span class="pris-enhet">kr/døgn</span>
+                            <button class="action-btn tekst liten" onclick="lastOppBilde('${p.id}')" title="Last opp bilde">🖼</button>
+                            ${p.bilde ? `<button class="action-btn tekst liten" onclick="slettBilde('${p.id}')" title="Slett bilde">✕</button>` : ''}
                             <button class="action-btn danger liten" onclick="slettPris('${p.id}')">Slett</button>
                         </div>
                     </div>
+                    <input type="file" id="filInput_${p.id}" accept="image/jpeg,image/png,image/webp" 
+                        style="display:none" onchange="sendBilde('${p.id}', this)">
                 `).join('')}
                 <button class="action-btn tekst" onclick="leggTilTillegg()" style="margin-top:8px;">+ Legg til tillegg</button>
             </div>
@@ -643,6 +653,46 @@
             </div>
         `;
     }
+
+    window.lastOppBilde = function(prisId) {
+        document.getElementById(`filInput_${prisId}`)?.click();
+    };
+
+    window.sendBilde = async function(prisId, input) {
+        if (!input.files?.length) return;
+        const formData = new FormData();
+        formData.append('bilde', input.files[0]);
+
+        try {
+            const res = await fetch(`/api/admin/pris/${prisId}/bilde`, {
+                method: 'POST',
+                headers: { 'x-admin-token': adminToken },
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                await lastPriser();
+            } else {
+                alert('Feil: ' + data.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+        input.value = '';
+    };
+
+    window.slettBilde = async function(prisId) {
+        if (!confirm('Slett bildet?')) return;
+        try {
+            const res = await fetch(`/api/admin/pris/${prisId}/bilde`, {
+                method: 'DELETE',
+                headers: { 'x-admin-token': adminToken }
+            });
+            if (res.ok) await lastPriser();
+            else {
+                const d = await res.json();
+                alert('Feil: ' + d.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
 
     window.oppdaterPris = async function(id, verdi) {
         try {
