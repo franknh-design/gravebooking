@@ -45,14 +45,33 @@ async function getAccessToken() {
 async function hentEnheter() {
     const token = await getAccessToken();
     const httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
-    const response = await axios.get(
+    const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+
+    // Prøv alle kjente endepunkter
+    const endepunkter = [
         'https://api.igloohome.co/v1/locks',
-        { 
-            httpsAgent,
-            headers: { 'Authorization': `Bearer ${token}` } 
+        'https://api.igloohome.co/v1/devices',
+        'https://api.igloohome.co/v2/locks',
+        'https://partnerapi.igloohome.co/v1/locks',
+        'https://api.igloohome.co/igloohome/devices/v1',
+    ];
+
+    for (const url of endepunkter) {
+        try {
+            console.log(`[iglohome] Prøver ${url}`);
+            const response = await axios.get(url, { httpsAgent, headers });
+            console.log(`[iglohome] Suksess på ${url}:`, JSON.stringify(response.data).slice(0, 200));
+            return { url, data: response.data };
+        } catch (e) {
+            const status = e.response?.status;
+            const detalj = e.response?.data || e.message;
+            console.log(`[iglohome] ${url} → ${status}: ${JSON.stringify(detalj).slice(0, 100)}`);
         }
-    );
-    return response.data;
+    }
+    throw new Error('Ingen iglohome-endepunkter svarte OK');
 }
 
 // Generer tidsbegrenset PIN-kode
