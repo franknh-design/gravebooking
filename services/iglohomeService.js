@@ -83,8 +83,8 @@ async function genererLeiekode({ startDato, sluttDato, ordreId }) {
             `${API_BASE}/devices/${config.iglohome.deviceId}/algopin/daily`,
             {
                 variance: 1,
-                startDate: startTid.toISOString(),
-                endDate: sluttTid.toISOString(),
+                startDate: startTid.toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+                endDate: sluttTid.toISOString().replace(/\.\d{3}Z$/, '+00:00'),
                 accessName: `Leie-${ordreId}`,
             },
             { headers }
