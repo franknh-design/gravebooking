@@ -13,26 +13,32 @@ async function getAccessToken() {
 
     const httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
 
-    const response = await axios.post(
-        'https://auth.igloohome.co/oauth2/token',
-        new URLSearchParams({
-            grant_type: 'client_credentials',
-            scope: 'igloohomeapi/algopin-hourly igloohomeapi/algopin-daily igloohomeapi/algopin-permanent'
-        }),
-        {
-            httpsAgent,
-            auth: {
-                username: config.iglohome.clientId,
-                password: config.iglohome.clientSecret
-            },
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        }
-    );
+    // Prøv med client_id/secret i body (ikke Basic Auth)
+    try {
+        const response = await axios.post(
+            'https://auth.igloohome.co/oauth2/token',
+            new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: config.iglohome.clientId,
+                client_secret: config.iglohome.clientSecret,
+                scope: 'igloohomeapi/algopin-hourly igloohomeapi/algopin-daily igloohomeapi/algopin-permanent'
+            }),
+            {
+                httpsAgent,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            }
+        );
 
-    cachedToken = response.data.access_token;
-    tokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
-    console.log('[iglohome] Token hentet, utløper om', Math.round(response.data.expires_in/60), 'min');
-    return cachedToken;
+        cachedToken = response.data.access_token;
+        tokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
+        console.log('[iglohome] Token hentet OK');
+        return cachedToken;
+    } catch (e) {
+        // Logg detaljert feil for debugging
+        const detalj = e.response?.data || e.message;
+        console.error('[iglohome] Token-feil:', JSON.stringify(detalj));
+        throw new Error('igloohome token-feil: ' + JSON.stringify(detalj));
+    }
 }
 
 // Hent liste over enheter på kontoen
