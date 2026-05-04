@@ -11,6 +11,8 @@ let tokenExpiry = 0;
 async function getAccessToken() {
     if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
 
+    const httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
+
     const response = await axios.post(
         'https://auth.igloohome.co/oauth2/token',
         new URLSearchParams({
@@ -18,6 +20,7 @@ async function getAccessToken() {
             scope: 'igloohomeapi/algopin-hourly igloohomeapi/algopin-daily igloohomeapi/algopin-permanent'
         }),
         {
+            httpsAgent,
             auth: {
                 username: config.iglohome.clientId,
                 password: config.iglohome.clientSecret
@@ -35,9 +38,13 @@ async function getAccessToken() {
 // Hent liste over enheter på kontoen
 async function hentEnheter() {
     const token = await getAccessToken();
+    const httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
     const response = await axios.get(
         'https://api.igloohome.co/v1/locks',
-        { headers: { 'Authorization': `Bearer ${token}` } }
+        { 
+            httpsAgent,
+            headers: { 'Authorization': `Bearer ${token}` } 
+        }
     );
     return response.data;
 }
