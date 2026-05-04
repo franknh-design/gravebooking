@@ -13,7 +13,7 @@ const fs = require('fs');
 // Multer for tilleggs-bilder
 const tilleggStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '../img/tillegg');
+        const dir = path.join(__dirname, '../public/img/tillegg');
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         cb(null, dir);
     },
@@ -68,11 +68,22 @@ router.delete('/pris/:id/bilde', krevAdmin, async (req, res) => {
         const db = getDb();
         const pris = await db.get(`SELECT bilde FROM priser WHERE id = ?`, [req.params.id]);
         if (pris?.bilde) {
-            const filsti = path.join(__dirname, '..', pris.bilde);
+            const filsti = path.join(__dirname, '../public', pris.bilde);
             if (fs.existsSync(filsti)) fs.unlinkSync(filsti);
         }
         await db.run(`UPDATE priser SET bilde = NULL WHERE id = ?`, [req.params.id]);
         res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Test iglohome-tilkobling og hent enheter
+router.get('/iglohome/enheter', krevAdmin, async (req, res) => {
+    try {
+        const { hentEnheter } = require('../services/iglohomeService');
+        const enheter = await hentEnheter();
+        res.json(enheter);
     } catch (error) {
         res.status(500).json({ feil: error.message });
     }
