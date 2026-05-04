@@ -13,7 +13,12 @@ const SCOPES = [
     'igloohomeapi/algopin-permanent',
 ].join(' ');
 
-function erMock() { return process.env.MOCK_MODE === 'true'; }
+function erMock() {
+    if (process.env.IGLOHOME_MOCK !== undefined) {
+        return process.env.IGLOHOME_MOCK === 'true';
+    }
+    return process.env.MOCK_MODE === 'true';
+}
 
 let cachedToken = null;
 let tokenExpiry = 0;
@@ -58,6 +63,12 @@ async function hentEnheter() {
     return alle;
 }
 
+function iglooDato(dato) {
+    const d = new Date(dato);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:00:00+00:00`;
+}
+
 async function genererLeiekode({ startDato, sluttDato, ordreId }) {
     const startTid = new Date(startDato);
     startTid.setHours(6, 0, 0, 0);
@@ -83,8 +94,8 @@ async function genererLeiekode({ startDato, sluttDato, ordreId }) {
             `${API_BASE}/devices/${config.iglohome.deviceId}/algopin/daily`,
             {
                 variance: 1,
-                startDate: startTid.toISOString().replace(/\.\d{3}Z$/, '+00:00'),
-                endDate: sluttTid.toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+                startDate: iglooDato(startTid),
+                endDate: iglooDato(sluttTid),
                 accessName: `Leie-${ordreId}`,
             },
             { headers }
