@@ -9,10 +9,10 @@ module.exports = {
         callbackPrefix: process.env.CALLBACK_URL || 'https://din-server.no/api/booking/vipps-callback'
     },
     iglohome: {
-        apiKey: process.env.IGLOHOME_API_KEY,
-        apiSecret: process.env.IGLOHOME_API_SECRET,
+        clientId: process.env.IGLOHOME_CLIENT_ID,
+        clientSecret: process.env.IGLOHOME_CLIENT_SECRET,
         deviceId: process.env.IGLOHOME_DEVICE_ID,
-        baseUrl: 'https://api.igloohome.co/igloohome/devices/v1'
+        baseUrl: 'https://api.igloohome.co/v1'
     },
 
     // Maskinspesifikasjoner - vises i UI og brukes i kommunikasjon
