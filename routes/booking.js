@@ -45,13 +45,13 @@ router.get('/konfig', async (req, res) => {
 });
 
 // Beregn pris for valgt periode og tillegg
-router.post('/beregn-pris', (req, res) => {
+router.post('/beregn-pris', async (req, res) => {
     try {
         const { antallDager, tilleggIds, transportIds } = req.body;
         if (!antallDager || antallDager < 1) {
             return res.status(400).json({ feil: 'Ugyldig antall dager' });
         }
-        const resultat = prisService.beregnTotalpris({ 
+        const resultat = await prisService.beregnTotalpris({ 
             antallDager, 
             tilleggIds: tilleggIds || [], 
             transportIds: transportIds || [] 
@@ -164,7 +164,7 @@ router.post('/opprett', async (req, res) => {
         const antallDager = Math.ceil((slutt - start) / (1000 * 60 * 60 * 24)) + 1;
 
         // Beregn pris med tillegg via prisService
-        const pris = prisService.beregnTotalpris({ antallDager, tilleggIds, transportIds });
+        const pris = await prisService.beregnTotalpris({ antallDager, tilleggIds, transportIds });
         const totalPris = pris.sumInkMva;
 
         const ordreId = `BOOK-${Date.now()}-${uuidv4().slice(0, 8)}`;
