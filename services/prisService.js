@@ -19,7 +19,7 @@ async function hentPriser() {
 
         const tillegg = rader
             .filter(r => r.type === 'tillegg')
-            .map(r => ({ id: r.id, navn: r.navn, pris: r.pris }));
+            .map(r => ({ id: r.id, navn: r.navn, pris: r.pris, bilde: r.bilde }));
 
         const transport = rader
             .filter(r => r.type === 'transport')
