@@ -73,10 +73,10 @@ async function genererLeiekode({ startDato, sluttDato, ordreId }) {
     const nå = new Date();
     const startTid = new Date(startDato);
 
-    // Hvis startdato er i dag - bruk neste hele time fra nå
-    // Hvis fremtidig dato - start fra midnatt UTC (kl 02:00 norsk tid)
+    // Hvis startdato er i dag - start fra nå (rundet ned til nærmeste time)
+    // Hourly PIN er gyldig fra oppgitt time, så vi bruker inneværende time
     if (startTid.toDateString() === nå.toDateString()) {
-        startTid.setUTCHours(nå.getUTCHours() + 1, 0, 0, 0);
+        startTid.setUTCHours(nå.getUTCHours(), 0, 0, 0);
     } else {
         startTid.setUTCHours(0, 0, 0, 0);
     }
