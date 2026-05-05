@@ -70,6 +70,8 @@
     // ----- Last og vis data -----
     async function lastData() {
         await Promise.all([lastStatistikk(), lastBookinger()]);
+        // Oppdater eksport-lenken med token
+        document.getElementById('eksportLenke').href = `/api/admin/eksport.csv?token=${encodeURIComponent(adminToken)}`;
     }
 
     async function lastStatistikk() {
@@ -297,7 +299,8 @@
             knapper.push(`<button class="action-btn danger" onclick="avvis('${b.ordreId}')">Avvis</button>`);
         }
 
-        if (['godkjent','aktiv','venter_godkjenning_retur'].includes(b.status)) {
+        if (['godkjent', 'aktiv'].includes(b.status)) {
+            knapper.push(`<button class="action-btn warning" onclick="tidligRetur('${b.ordreId}')">Tidlig retur</button>`);
             knapper.push(`<button class="action-btn tekst" onclick="sendLenkerIgjen('${b.ordreId}')">Send lenker på nytt</button>`);
             if (b.iglohomeKode) {
                 knapper.push(`<button class="action-btn tekst" onclick="sendKodeIgjen('${b.ordreId}')">Send kode på SMS</button>`);
@@ -338,6 +341,27 @@
             const data = await res.json();
             if (!res.ok) { alert('Feil: ' + data.feil); return; }
             alert(data.advarsel || 'Avvist');
+            lukkDetalj();
+            lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.tidligRetur = async function(ordreId) {
+        const notat = prompt('Notat om tidlig retur (valgfritt):\n\nEks: "Kunde ferdig 1 dag tidlig, vurderer refusjon"');
+        if (notat === null) return;
+        if (!confirm(`Registrere tidlig retur for ${ordreId}?\n\n- Koden deaktiveres umiddelbart\n- Datoer frigjøres for nye bookinger\n- Booking markeres som fullført\n\nHusk å refundere via Vipps hvis aktuelt!`)) return;
+
+        try {
+            const res = await api(`/api/admin/tidlig-retur/${ordreId}`, {
+                method: 'POST',
+                body: JSON.stringify({ notat })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(data.melding);
             lukkDetalj();
             lastData();
         } catch (e) { alert('Feil: ' + e.message); }
