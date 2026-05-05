@@ -555,6 +555,121 @@ router.post('/ny-kode/:ordreId', async (req, res) => {
     }
 });
 
+// Forleng leieperiode
+router.post('/forleng/:ordreId', krevAdmin, async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const { nySluttDato } = req.body;
+
+        if (!nySluttDato) {
+            return res.status(400).json({ feil: 'nySluttDato er påkrevd (YYYY-MM-DD)' });
+        }
+
+        const db = getDb();
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+
+        if (!['godkjent', 'aktiv'].includes(booking.status)) {
+            return res.status(400).json({ feil: `Kan ikke forlenge booking med status: ${booking.status}` });
+        }
+
+        if (nySluttDato <= booking.sluttDato) {
+            return res.status(400).json({ feil: 'Ny sluttdato må være etter nåværende sluttdato' });
+        }
+
+        // Sjekk om de nye dagene er ledige
+        const konflikter = await db.all(`
+            SELECT ordreId FROM bookings
+            WHERE ordreId != ?
+            AND status NOT IN ('avbrutt', 'fullfoert')
+            AND NOT (sluttDato < ? OR startDato > ?)
+        `, [ordreId, booking.sluttDato, nySluttDato]);
+
+        if (konflikter.length > 0) {
+            return res.status(409).json({
+                feil: `Perioden er ikke ledig – konflikt med ${konflikter.length} annen booking`
+            });
+        }
+
+        // Beregn tilleggspris
+        const { beregnTotalpris } = require('../services/prisService');
+        const gamleAntallDager = Math.ceil(
+            (new Date(booking.sluttDato) - new Date(booking.startDato)) / (1000 * 60 * 60 * 24)
+        ) + 1;
+        const nyeAntallDager = Math.ceil(
+            (new Date(nySluttDato) - new Date(booking.startDato)) / (1000 * 60 * 60 * 24)
+        ) + 1;
+        const ekstraDager = nyeAntallDager - gamleAntallDager;
+
+        const gammelPris = await beregnTotalpris({
+            antallDager: gamleAntallDager,
+            tilleggIds: JSON.parse(booking.tilleggIds || '[]'),
+            transportIds: JSON.parse(booking.transportIds || '[]')
+        });
+        const nyPris = await beregnTotalpris({
+            antallDager: nyeAntallDager,
+            tilleggIds: JSON.parse(booking.tilleggIds || '[]'),
+            transportIds: JSON.parse(booking.transportIds || '[]')
+        });
+
+        const tilleggspris = nyPris.sumInkMva - gammelPris.sumInkMva;
+
+        // Deaktiver gammel iglohome-kode og generer ny
+        const { genererLeiekode, deaktiverKode } = require('../services/iglohomeService');
+
+        if (booking.iglohomeKodeId) {
+            try {
+                await deaktiverKode(booking.iglohomeKodeId);
+            } catch (e) {
+                console.warn('Kunne ikke deaktivere gammel kode:', e.message);
+            }
+        }
+
+        const nyKode = await genererLeiekode({
+            startDato: booking.startDato,
+            sluttDato: nySluttDato,
+            ordreId
+        });
+
+        // Oppdater booking
+        const notatTekst = `[${new Date().toISOString()}] Leie forlenget fra ${booking.sluttDato} til ${nySluttDato} (+${ekstraDager} dag${ekstraDager > 1 ? 'er' : ''}, +${tilleggspris} kr). Ny kode generert.`;
+
+        await db.run(`
+            UPDATE bookings
+            SET sluttDato = ?,
+                antallDager = ?,
+                totalPris = ?,
+                iglohomeKode = ?,
+                iglohomeKodeId = ?,
+                notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [nySluttDato, nyeAntallDager, nyPris.sumInkMva, nyKode.kode, nyKode.kodeId, notatTekst, ordreId]);
+
+        // SMS til kunde
+        try {
+            await smsService.sendSms({
+                til: booking.kundeTelefon,
+                melding: `Hei ${booking.kundeNavn}! Leieperioden din er forlenget til ${nySluttDato}.\n\nNy kode til nøkkelboksen: ${nyKode.kode}\n\nDen gamle koden fungerer ikke lenger.`
+            });
+        } catch (e) {
+            console.error('SMS feilet:', e.message);
+        }
+
+        res.json({
+            ok: true,
+            ekstraDager,
+            tilleggspris,
+            nySluttDato,
+            nyKode: nyKode.kode,
+            melding: `Leie forlenget til ${nySluttDato}. Ny kode sendt til kunde. Husk å kreve inn ${tilleggspris} kr ekstra via Vipps.`
+        });
+    } catch (error) {
+        console.error('Forleng-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Tidlig retur - deaktiver kode og frigjør datoer
 router.post('/tidlig-retur/:ordreId', krevAdmin, async (req, res) => {
     try {

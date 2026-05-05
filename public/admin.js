@@ -307,6 +307,7 @@
         }
 
         if (['godkjent', 'aktiv'].includes(b.status)) {
+            knapper.push(`<button class="action-btn primary" onclick="forlengLeie('${b.ordreId}', '${b.sluttDato}')">Forleng leie</button>`);
             knapper.push(`<button class="action-btn warning" onclick="tidligRetur('${b.ordreId}')">Tidlig retur</button>`);
             knapper.push(`<button class="action-btn tekst" onclick="sendLenkerIgjen('${b.ordreId}')">Send lenker på nytt</button>`);
             if (b.iglohomeKode) {
@@ -348,6 +349,32 @@
             const data = await res.json();
             if (!res.ok) { alert('Feil: ' + data.feil); return; }
             alert(data.advarsel || 'Avvist');
+            lukkDetalj();
+            lastData();
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
+
+    window.forlengLeie = async function(ordreId, nåværendeSluttDato) {
+        const nySluttDato = prompt(
+            `Forleng leie for ${ordreId}\n\nNåværende sluttdato: ${nåværendeSluttDato}\n\nNy sluttdato (YYYY-MM-DD):`
+        );
+        if (!nySluttDato) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(nySluttDato)) {
+            alert('Ugyldig datoformat. Bruk YYYY-MM-DD (f.eks. 2026-05-10)');
+            return;
+        }
+
+        try {
+            const res = await api(`/api/admin/forleng/${ordreId}`, {
+                method: 'POST',
+                body: JSON.stringify({ nySluttDato })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Feil: ' + data.feil);
+                return;
+            }
+            alert(`${data.melding}\n\nNy kode: ${data.nyKode}\nEkstra dager: ${data.ekstraDager}\nTilleggspris: ${data.tilleggspris.toLocaleString('nb-NO')} kr`);
             lukkDetalj();
             lastData();
         } catch (e) { alert('Feil: ' + e.message); }
