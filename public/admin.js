@@ -79,8 +79,6 @@
     // ----- Last og vis data -----
     async function lastData() {
         await Promise.all([lastStatistikk(), lastBookinger()]);
-        // Oppdater eksport-lenken med token
-        document.getElementById('eksportLenke').href = `/api/admin/eksport.csv?token=${encodeURIComponent(adminToken)}`;
     }
 
     async function lastStatistikk() {
@@ -574,19 +572,40 @@
         document.getElementById('eksportModal').classList.remove('synlig');
     };
 
-    window.lastNedEksport = function() {
+    window.lastNedEksport = async function() {
         const fra = document.getElementById('eksportFra').value;
         const til = document.getElementById('eksportTil').value;
         const status = document.getElementById('eksportStatus').value;
-        const token = adminToken;
 
-        const params = new URLSearchParams({ token });
+        const params = new URLSearchParams();
         if (fra) params.set('fra', fra);
         if (til) params.set('til', til);
         if (status) params.set('status', status);
 
-        window.location.href = `/api/admin/eksport.csv?${params.toString()}`;
-        lukkEksport();
+        try {
+            const url = '/api/admin/eksport.csv' + (params.toString() ? '?' + params.toString() : '');
+            const response = await fetch(url, {
+                headers: { 'x-admin-token': adminToken }
+            });
+            if (!response.ok) {
+                throw new Error(`Eksport feilet: ${response.status} ${response.statusText}`);
+            }
+            const cd = response.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="([^"]+)"/);
+            const filnavn = match ? match[1] : `bookinger-${new Date().toISOString().split('T')[0]}.csv`;
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filnavn;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+            lukkEksport();
+        } catch (e) {
+            alert('Kunne ikke eksportere: ' + e.message);
+        }
     };
 
     // ----- Priser -----
