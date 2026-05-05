@@ -131,11 +131,24 @@ async function sendViaKeySMS({ til, melding }) {
             timeout: 10000  // 10 sek timeout
         });
 
-        console.log(`[SMS] KeySMS-respons:`, response.status, response.data);
+        // KeySMS svarer alltid HTTP 200 - faktisk status ligger i body.ok
+        const data = response.data || {};
+        if (data.ok === false) {
+            const feilmelding = data.error || 'Ukjent KeySMS-feil';
+            console.error(`[SMS] KeySMS avviste melding: ${feilmelding}`);
+            return {
+                ok: false,
+                simulert: false,
+                feil: `KeySMS: ${feilmelding}`,
+                leverandorRespons: data
+            };
+        }
+
+        console.log(`[SMS] KeySMS-respons OK:`, response.status, data);
         return {
             ok: true,
             simulert: false,
-            leverandorRespons: response.data
+            leverandorRespons: data
         };
     } catch (error) {
         const status = error.response ? error.response.status : 'ingen';
