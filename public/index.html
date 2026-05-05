@@ -33,7 +33,33 @@
             min-height: 100vh;
             font-size: 18px;
         }
-        .container { max-width: 1240px; margin: 0 auto; padding: 0 20px 40px; }
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .spec-kort {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+        }
+        .spec-navn {
+            font-size: 0.82rem;
+            color: var(--tekst-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+        .spec-verdi {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        @media (max-width: 600px) {
+            .specs-grid { grid-template-columns: repeat(2, 1fr); }
+        }
 
         /* Footer - enkel og diskret */
         .footer {
@@ -667,6 +693,14 @@
         </div>
     </div>
 
+    <!-- Maskinspesifikasjoner -->
+    <div class="container" id="spesContainer" style="padding-top: 0;">
+        <div class="card" style="margin-top: 0;">
+            <h2>Spesifikasjoner</h2>
+            <div id="spesGrid" class="specs-grid"></div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <p class="footer-tekst">
@@ -709,6 +743,7 @@
                 renderTillegg();
                 renderTransport();
                 renderPrismatrise();
+                renderSpesifikasjoner();
 
                 // Oppdater depositum-tekst dynamisk
                 const dep = konfig.priser.depositum;
@@ -754,6 +789,18 @@
                 </div>
             `;
             document.getElementById('hentAdresse').textContent = m.adresse;
+        }
+
+        function renderSpesifikasjoner() {
+            const el = document.getElementById('spesGrid');
+            const specs = konfig.maskin.spesifikasjoner;
+            if (!el || !specs?.length) return;
+            el.innerHTML = specs.map(s => `
+                <div class="spec-kort">
+                    <div class="spec-navn">${s.navn}</div>
+                    <div class="spec-verdi">${s.verdi}</div>
+                </div>
+            `).join('');
         }
 
         function renderTillegg() {
