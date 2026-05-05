@@ -87,12 +87,20 @@ app.use(async (req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/img', express.static(path.join(__dirname, 'img')));
 
 app.use('/api/booking', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/inspeksjon', inspeksjonRoutes);
 app.use('/api/info', infoRoutes);
+
+// Versjon-endepunkt
+app.get('/api/versjon', (req, res) => {
+    const pkg = require('./package.json');
+    const { execSync } = require('child_process');
+    let commit = 'ukjent';
+    try { commit = execSync('git rev-parse --short HEAD').toString().trim(); } catch (e) {}
+    res.json({ versjon: pkg.version, commit, node: process.version });
+});
 
 // Mock-API kun aktivt når MOCK_MODE=true
 if (process.env.MOCK_MODE === 'true') {
