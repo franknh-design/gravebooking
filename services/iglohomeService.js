@@ -91,7 +91,7 @@ async function genererLeiekode({ startDato, sluttDato, ordreId }) {
 
     try {
         const { data } = await axios.post(
-            `${API_BASE}/devices/${config.iglohome.deviceId}/algopin/daily`,
+            `${API_BASE}/devices/${config.iglohome.deviceId}/algopin/hourly`,
             {
                 variance: 1,
                 startDate: iglooDato(startTid),
