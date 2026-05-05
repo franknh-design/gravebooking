@@ -672,6 +672,7 @@
         <p class="footer-tekst">
             <strong>Norvetuva Nord AS</strong> · 
             <a href="tel:+4791649192" class="footer-lenke">📞 +47 91 64 91 92</a> · 
+            <a href="/personvern.html" class="footer-lenke">Personvern</a> ·
             Laget av <a href="tel:+4799101041" class="haugan-lenke" title="+47 99 10 10 41">Haugan</a>
         </p>
     </footer>
@@ -1135,14 +1136,29 @@
                 innhold.innerHTML = `
                     <div class="modal-tittel">Personvernerklæring</div>
                     <div class="modal-body">
-                        <h3>Hvilke opplysninger samler vi inn?</h3>
-                        <p>Navn, mobilnummer, e-post, leieperiode, og evt. adresse for bringing/henting. Mobilnummer brukes for utsending av låskode og kommunikasjon under leieperioden.</p>
-                        <h3>Hvor lenge lagres opplysningene?</h3>
-                        <p>Bookingdata lagres i 5 år av regnskapsmessige hensyn (jf. bokføringsloven). Etter dette slettes personopplysninger.</p>
-                        <h3>Hvem deler vi data med?</h3>
-                        <p>Vipps (for betaling), iglohome (for låskode), SMS-leverandør (for utsending av kode). Vi deler ikke data med tredjepart for markedsføring.</p>
+                        <h3>Behandlingsansvarlig</h3>
+                        <p>Norvetuva Nord AS, Bjørnøygata 42, 9019 Tromsø. Tlf: +47 91 64 91 92.</p>
+
+                        <h3>Hva samler vi inn?</h3>
+                        <p>Navn, mobilnummer, e-post, og evt. adresse for bringing/henting. Ved faktura også firmanavn og org.nr. Bilder av maskinen tas ved henting og levering.</p>
+
+                        <h3>Hvorfor?</h3>
+                        <p>For å gjennomføre leieforholdet: sende låskode, bekrefte booking, håndtere retur og fakturering. Grunnlag: oppfyllelse av avtale (GDPR art. 6 nr. 1 b).</p>
+
+                        <h3>Hvor lenge?</h3>
+                        <p>Bookingdata lagres i 5 år etter leieperiodens slutt (bokføringsloven). Deretter slettes personopplysninger.</p>
+
+                        <h3>Hvem deler vi med?</h3>
+                        <p>Hetzner (serverhosting, EU), Vipps (betaling), igloohome (låskode-generering) og SMS-leverandør. Ingen deling for markedsføring.</p>
+
                         <h3>Dine rettigheter</h3>
-                        <p>Du har rett til innsyn, retting og sletting av dine opplysninger. Kontakt oss for å utøve disse rettighetene.</p>
+                        <p>Innsyn, retting, sletting og dataportabilitet. Kontakt oss på +47 91 64 91 92. Klager til Datatilsynet: datatilsynet.no.</p>
+
+                        <p style="margin-top: 16px;">
+                            <a href="/personvern.html" target="_blank" style="color: var(--primary); font-weight: 500;">
+                                Les full personvernerklæring →
+                            </a>
+                        </p>
                     </div>`;
             }
             document.getElementById('modalOverlay').classList.add('synlig');
