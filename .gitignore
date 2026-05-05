@@ -1,52 +1,43 @@
-# --- HEMMELIGHETER (ALDRI PÅ GITHUB) ---
-.env
-.env.local
-.env.production
-*.pem
-*.key
+# Backups
+*.bak
+*.bak2
+*.original
 
-# --- KUNDEDATA (ALDRI PÅ GITHUB) ---
-db/*.db
-db/*.db-journal
-db/*.db-wal
-db/*.db-shm
-uploads/
-backup/
+# OS / shell
+.bash_history
+.lesshst
 
-# --- LOGGER ---
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# --- NODE_MODULES ---
+# Node
 node_modules/
+.npm/
 
-# --- IDE / OS ---
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
+# SSH (KRITISK - skal aldri inn i repo)
+.ssh/
 
-# --- BYGG / TEMP ---
-dist/
-build/
-tmp/
-temp/
-*.tmp
+# Lokale logger
+mock-sms-logg.json
 
-# --- SQLITE BACKUPS ---
-*.sqlite
-*.sqlite-journal
-*.sqlite3
+# Lokale uploads
+img/tillegg/
 
-# --- PRIVATE BILDER ---
-# Kommenter ut hvis du laster opp markedsføringsbilder med tillatelse
-# public/img/
+# Test-skript
+iglo-format-test.js
+iglo-pin-test*.js
 
-# --- IGLOHOME / VIPPS / SMS-konfigurasjon ---
-config/secrets.js
-config/local.js
+# Typo-filer
+public/admin.j
+
+# Miljøvariabler
+.env
+
+# Database (ALDRI i repo - inneholder kundedata)
+db/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Bilder (kundeopplastinger)
+public/img/checkin/
+public/img/checkout/
+public/uploads/

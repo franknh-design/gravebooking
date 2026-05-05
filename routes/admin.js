@@ -36,7 +36,7 @@ const tilleggUpload = multer({
 
 // Middleware: krever admin-token
 function krevAdmin(req, res, next) {
-    const token = req.headers['x-admin-token'] || req.query.token;
+    const token = req.headers['x-admin-token'];
     if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
         return res.status(401).json({ feil: 'Uautorisert' });
     }
