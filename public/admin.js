@@ -37,6 +37,15 @@
         }
     };
 
+    // Hent og vis versjonsnummer
+    fetch('/api/versjon')
+        .then(r => r.json())
+        .then(d => {
+            const el = document.getElementById('adminVersjon');
+            if (el) el.textContent = `v${d.versjon} · ${d.commit}`;
+        })
+        .catch(() => {});
+
     window.loggUt = function() {
         sessionStorage.removeItem('adminToken');
         adminToken = null;

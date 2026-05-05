@@ -601,7 +601,7 @@
                             <input type="checkbox" id="ansvar2" onchange="oppdaterKnapp()">
                             <div class="ansvar-tekst">
                                 <span class="ansvar-tittel">Jeg er ansvarlig for skade på maskinen i leieperioden</span>
-                                <span class="ansvar-detalj">Egenandel inntil 5 000 kr (depositum). Større skader belastes etter takst. Bilder må tas ved henting og levering.</span>
+                                <span class="ansvar-detalj">Egenandel inntil <span id="ansvarDepositum">5 000 kr</span> (depositum). Større skader belastes etter takst. Bilder må tas ved henting og levering.</span>
                             </div>
                         </label>
 
@@ -709,6 +709,13 @@
                 renderTillegg();
                 renderTransport();
                 renderPrismatrise();
+
+                // Oppdater depositum-tekst dynamisk
+                const dep = konfig.priser.depositum;
+                const depEl = document.getElementById('ansvarDepositum');
+                if (depEl && dep) {
+                    depEl.textContent = dep.toLocaleString('nb-NO') + ' kr';
+                }
             } catch (err) {
                 console.error('Kunne ikke laste konfig:', err);
             }
@@ -1116,7 +1123,7 @@
                     <div class="modal-tittel">Leievilkår</div>
                     <div class="modal-body">
                         <h3>1. Booking og betaling</h3>
-                        <p>Booking er bindende ved gjennomført Vipps-betaling. Depositum på 5 000 kr (eks mva) reserveres ved henting og frigis etter retur dersom ingen skader oppdages.</p>
+                        <p>Booking er bindende ved gjennomført Vipps-betaling. Depositum reserveres ved henting og frigis etter retur dersom ingen skader oppdages. Se priser på forsiden.</p>
                         <h3>2. Avbestilling</h3>
                         <p>Avbestilling mer enn 48 timer før leiestart: full refusjon. 24-48 timer før: 50% refusjon. Mindre enn 24 timer: ingen refusjon.</p>
                         <h3>3. Henting og levering</h3>
@@ -1128,7 +1135,7 @@
                         <h3>6. Bruksområde</h3>
                         <p>Maskinen skal kun benyttes til normalt gravearbeid. Bruk i sjø/vann, sprengning, eller annen ekstrem belastning er ikke tillatt.</p>
                         <h3>7. Skader og forsikring</h3>
-                        <p>Leietaker er ansvarlig for alle skader i leieperioden. Egenandel inntil depositum (5 000 kr eks mva). Større skader belastes etter takst.</p>
+                        <p>Leietaker er ansvarlig for alle skader i leieperioden. Egenandel inntil depositumbeløpet (se priser på forsiden). Større skader belastes etter takst.</p>
                         <h3>8. Tvist</h3>
                         <p>Eventuelle tvister behandles etter norsk rett ved Nord-Troms tingrett.</p>
                     </div>`;
