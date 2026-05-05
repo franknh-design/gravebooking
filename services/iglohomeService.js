@@ -70,10 +70,19 @@ function iglooDato(dato) {
 }
 
 async function genererLeiekode({ startDato, sluttDato, ordreId }) {
+    const nå = new Date();
     const startTid = new Date(startDato);
-    startTid.setHours(6, 0, 0, 0);
+
+    // Hvis startdato er i dag - bruk neste hele time fra nå
+    // Hvis fremtidig dato - start fra midnatt UTC (kl 02:00 norsk tid)
+    if (startTid.toDateString() === nå.toDateString()) {
+        startTid.setUTCHours(nå.getUTCHours() + 1, 0, 0, 0);
+    } else {
+        startTid.setUTCHours(0, 0, 0, 0);
+    }
+
     const sluttTid = new Date(sluttDato);
-    sluttTid.setHours(22, 0, 0, 0);
+    sluttTid.setUTCHours(22, 0, 0, 0);
 
     if (erMock()) {
         const kode = String(Math.floor(100000 + Math.random() * 900000));
