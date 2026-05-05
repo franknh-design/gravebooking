@@ -41,3 +41,9 @@ db/
 public/img/checkin/
 public/img/checkout/
 public/uploads/
+
+# Claude Code lokal konfig
+.claude/
+
+# Lokale arkiver
+forleng.zip
