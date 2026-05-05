@@ -1,6 +1,7 @@
 // services/iglohomeService.js - Genererer tidsbegrensede koder via iglooaccess API
 const axios = require('axios');
 const config = require('../config/config');
+axios.defaults.httpsAgent = new (require('https').Agent)({ rejectUnauthorized: false });
 
 function erMock() { 
     // IGLOHOME_MOCK overstyrer MOCK_MODE hvis satt eksplisitt
