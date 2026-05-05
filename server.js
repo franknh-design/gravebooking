@@ -86,6 +86,22 @@ app.use(async (req, res, next) => {
     next();
 });
 
+// Cache-bust admin.html: legg til mtime som ?v= på admin.js og admin.css
+app.get('/admin.html', (req, res, next) => {
+    try {
+        const publicDir = path.join(__dirname, 'public');
+        const jsV = fs.statSync(path.join(publicDir, 'admin.js')).mtimeMs.toString(36);
+        const cssV = fs.statSync(path.join(publicDir, 'admin.css')).mtimeMs.toString(36);
+        let html = fs.readFileSync(path.join(publicDir, 'admin.html'), 'utf8');
+        html = html.replace('href="/admin.css"', `href="/admin.css?v=${cssV}"`);
+        html = html.replace('src="/admin.js"', `src="/admin.js?v=${jsV}"`);
+        res.set('Cache-Control', 'no-cache');
+        res.type('html').send(html);
+    } catch (e) {
+        next();
+    }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/booking', bookingRoutes);
