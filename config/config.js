@@ -30,7 +30,18 @@ module.exports = {
         koordinater: {
             lat: 69.639712,
             lng: 18.933157
-        }
+        },
+        spesifikasjoner: [
+            { navn: 'Vekt',             verdi: '1 940 kg' },
+            { navn: 'Maks tippehøyde',  verdi: '2,75 m' },
+            { navn: 'Maks rekkevidde',  verdi: '4,36 m' },
+            { navn: 'Drift',            verdi: 'Diesel' },
+            { navn: 'Kobling bøtte',    verdi: 'S30' },
+            { navn: 'Effekt',           verdi: '12 kW' },
+            { navn: 'Lengde',           verdi: '3,746 m' },
+            { navn: 'Bredde',           verdi: '0,995 m' },
+            { navn: 'Høyde',            verdi: '2,395 m' },
+        ]
     },
 
     // Prismatrise - alle priser eks mva, mva legges på i UI/regning
