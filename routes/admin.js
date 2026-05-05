@@ -555,6 +555,64 @@ router.post('/ny-kode/:ordreId', async (req, res) => {
     }
 });
 
+// Tidlig retur - deaktiver kode og frigjør datoer
+router.post('/tidlig-retur/:ordreId', krevAdmin, async (req, res) => {
+    try {
+        const { ordreId } = req.params;
+        const { notat } = req.body;
+        const db = getDb();
+
+        const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
+        if (!booking) return res.status(404).json({ feil: 'Ikke funnet' });
+
+        if (!['godkjent', 'aktiv'].includes(booking.status)) {
+            return res.status(400).json({ feil: `Kan ikke registrere tidlig retur for status: ${booking.status}` });
+        }
+
+        const iDag = new Date().toISOString().split('T')[0];
+
+        // Deaktiver iglohome-koden
+        if (booking.iglohomeKodeId) {
+            try {
+                const { deaktiverKode } = require('../services/iglohomeService');
+                await deaktiverKode(booking.iglohomeKodeId);
+            } catch (e) {
+                console.error('Kunne ikke deaktivere kode:', e.message);
+                // Fortsett selv om deaktivering feiler
+            }
+        }
+
+        // Oppdater booking: sett sluttdato til i dag og marker som fullført
+        const notatTekst = `[${new Date().toISOString()}] Tidlig retur registrert. Opprinnelig sluttdato: ${booking.sluttDato}. ${notat || ''}`;
+
+        await db.run(`
+            UPDATE bookings 
+            SET status = 'fullfoert',
+                sluttDato = ?,
+                utsjekkFullfoert = ?,
+                notater = COALESCE(notater || char(10), '') || ?
+            WHERE ordreId = ?
+        `, [iDag, new Date().toISOString(), notatTekst, ordreId]);
+
+        // Varsle admin
+        const opprinneligSlutt = booking.sluttDato;
+        const dagerTidlig = Math.ceil(
+            (new Date(opprinneligSlutt) - new Date(iDag)) / (1000 * 60 * 60 * 24)
+        );
+
+        res.json({
+            ok: true,
+            melding: `Tidlig retur registrert. Kode deaktivert. ${dagerTidlig > 0 ? `${dagerTidlig} dag(er) frigjort.` : ''} Husk å vurdere refusjon via Vipps hvis aktuelt.`,
+            dagerTidlig,
+            opprinneligSlutt,
+            nySluttdato: iDag
+        });
+    } catch (error) {
+        console.error('Tidlig-retur-feil:', error);
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Avvis booking - må refundere via Vipps separat
 router.post('/avvis/:ordreId', async (req, res) => {
     try {
