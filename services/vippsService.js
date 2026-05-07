@@ -2,7 +2,11 @@
 const axios = require('axios');
 const config = require('../config/config');
 
-function erMock() { return process.env.MOCK_MODE === 'true'; }
+function erMock() {
+    if (process.env.VIPPS_MOCK === 'true') return true;
+    if (process.env.VIPPS_MOCK === 'false') return false;
+    return process.env.MOCK_MODE === 'true';
+}
 
 let cachedToken = null;
 let tokenExpiry = 0;
