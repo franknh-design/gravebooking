@@ -302,17 +302,19 @@ router.post('/vipps-callback/:ordreId', async (req, res) => {
             return res.status(400).json({ feil: 'Betaling ikke bekreftet' });
         }
 
-        const nyStatus = config.booking.kreverManuellGodkjenning 
-            ? 'venter_godkjenning' 
-            : 'godkjent';
+        const innst = await db.get(
+            `SELECT verdi FROM innstillinger WHERE nokkel = 'vipps_krever_godkjenning'`
+        );
+        const kreverGodkjenning = innst?.verdi !== '0';
+        const nyStatus = kreverGodkjenning ? 'venter_godkjenning' : 'godkjent';
 
         await db.run(`
-            UPDATE bookings 
+            UPDATE bookings
             SET status = ?, betalt = CURRENT_TIMESTAMP, vippsTransaksjonsId = ?
             WHERE ordreId = ?
         `, [nyStatus, transactionInfo?.transactionId || 'ukjent', ordreId]);
 
-        if (!config.booking.kreverManuellGodkjenning) {
+        if (!kreverGodkjenning) {
             await genererOgSendKode(ordreId);
         } else {
             await smsService.sendSms({

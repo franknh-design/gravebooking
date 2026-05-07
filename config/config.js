@@ -76,7 +76,6 @@ module.exports = {
 
     booking: {
         bufferMinutter: 30, // tid mellom utleier
-        kreverManuellGodkjenning: true,
         maksRadiusKmTransport: 30 // sjekk i admin før godkjenning
     },
 

@@ -83,6 +83,7 @@ async function initDatabase() {
         -- Standardverdier
         INSERT OR IGNORE INTO innstillinger (nokkel, verdi) VALUES ('vedlikehold_aktiv', '0');
         INSERT OR IGNORE INTO innstillinger (nokkel, verdi) VALUES ('vedlikehold_melding', 'Siden er midlertidig nede for vedlikehold. Vi er snart tilbake!');
+        INSERT OR IGNORE INTO innstillinger (nokkel, verdi) VALUES ('vipps_krever_godkjenning', '1');
 
         CREATE TABLE IF NOT EXISTS priser (
             id TEXT PRIMARY KEY,

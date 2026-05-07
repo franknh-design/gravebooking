@@ -29,6 +29,7 @@
                 skjulLogin();
                 lastData();
                 lastVedlikeholdStatus();
+                lastVippsGodkjenning();
             } else {
                 document.getElementById('loginFeil').textContent = 'Feil token';
             }
@@ -575,6 +576,55 @@
             }
         } catch (e) { alert('Feil: ' + e.message); }
     }
+
+    // ----- Vipps-godkjenning -----
+    let vippsGodkjenningAktiv = true;
+
+    async function lastVippsGodkjenning() {
+        try {
+            const res = await api('/api/admin/vipps-godkjenning');
+            const data = await res.json();
+            vippsGodkjenningAktiv = data.kreverGodkjenning;
+            oppdaterVippsKnapp();
+        } catch (e) { console.error(e); }
+    }
+
+    function oppdaterVippsKnapp() {
+        const knapp = document.getElementById('vippsGodkjenningKnapp');
+        if (!knapp) return;
+        if (vippsGodkjenningAktiv) {
+            knapp.textContent = 'Vipps: godkjenning på';
+            knapp.style.background = '#2d7a3a';
+            knapp.style.borderColor = '#2d7a3a';
+            knapp.style.color = 'white';
+        } else {
+            knapp.textContent = 'Vipps: auto-godkjenn';
+            knapp.style.background = '';
+            knapp.style.borderColor = '';
+            knapp.style.color = '';
+        }
+    }
+
+    window.toggleVippsGodkjenning = async function() {
+        const ny = !vippsGodkjenningAktiv;
+        const tekst = ny
+            ? 'Slå PÅ admin-godkjenning for Vipps-bookinger? Nye Vipps-betalinger vil kreve manuell godkjenning før PIN sendes.'
+            : 'Slå AV admin-godkjenning for Vipps-bookinger? PIN vil sendes automatisk etter betaling.';
+        if (!confirm(tekst)) return;
+        try {
+            const res = await api('/api/admin/vipps-godkjenning', {
+                method: 'POST',
+                body: JSON.stringify({ kreverGodkjenning: ny })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                vippsGodkjenningAktiv = data.kreverGodkjenning;
+                oppdaterVippsKnapp();
+            } else {
+                alert('Feil: ' + data.feil);
+            }
+        } catch (e) { alert('Feil: ' + e.message); }
+    };
 
     // ----- Hjelp -----
     window.visHjelp = function() {

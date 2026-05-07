@@ -104,6 +104,34 @@ router.get('/vedlikehold', async (req, res) => {
     }
 });
 
+// Hent Vipps-godkjenningsstatus
+router.get('/vipps-godkjenning', async (req, res) => {
+    try {
+        const db = getDb();
+        const innst = await db.get(
+            `SELECT verdi FROM innstillinger WHERE nokkel = 'vipps_krever_godkjenning'`
+        );
+        res.json({ kreverGodkjenning: innst?.verdi !== '0' });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
+// Slå Vipps-godkjenning av/på
+router.post('/vipps-godkjenning', async (req, res) => {
+    try {
+        const { kreverGodkjenning } = req.body;
+        const db = getDb();
+        await db.run(
+            `UPDATE innstillinger SET verdi = ?, oppdatert = ? WHERE nokkel = 'vipps_krever_godkjenning'`,
+            [kreverGodkjenning ? '1' : '0', new Date().toISOString()]
+        );
+        res.json({ ok: true, kreverGodkjenning: !!kreverGodkjenning });
+    } catch (error) {
+        res.status(500).json({ feil: error.message });
+    }
+});
+
 // Slå vedlikehold av/på
 router.post('/vedlikehold', async (req, res) => {
     try {
