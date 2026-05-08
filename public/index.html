@@ -201,13 +201,31 @@
             text-shadow: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
+        /* Under 900px: stack logo over tekst for å unngå overlapp */
+        @media (max-width: 900px) {
+            .hero {
+                flex-direction: column;
+                justify-content: center;
+                height: auto;
+                min-height: 200px;
+                padding: 18px 0;
+                gap: 12px;
+            }
+            .hero-logo {
+                position: static;
+                transform: none;
+                height: 56px;
+            }
+            .hero-tekst {
+                padding: 0 20px;
+                text-align: center;
+            }
+        }
         @media (max-width: 768px) {
-            .hero { height: 200px; }
             .hero::before {
                 background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.85) 100%);
             }
-            .hero-tekst { padding: 0 20px; text-align: center; }
-            .hero-logo { height: 50px; left: 14px; }
+            .hero-logo { height: 50px; }
             .hero-tekst .subtitle { font-size: 1rem; }
             .hero-badge { font-size: 0.75rem; }
         }
