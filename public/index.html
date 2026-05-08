@@ -169,11 +169,12 @@
             padding: 0 40px;
             text-shadow: 0 2px 12px rgba(0,0,0,0.85), 0 0 30px rgba(0,0,0,0.5);
         }
-        .hero-tekst h1 {
-            font-size: 3.2rem; margin-bottom: 14px;
-            color: white; font-weight: 700; letter-spacing: -0.5px;
-            line-height: 1.1;
-            max-width: 720px;
+        .hero-logo {
+            display: block;
+            height: 110px;
+            width: auto;
+            margin-bottom: 14px;
+            filter: drop-shadow(0 2px 12px rgba(0,0,0,0.6));
         }
         .hero-tekst .subtitle {
             color: rgba(255, 255, 255, 0.95); font-size: 1.25rem;
@@ -200,7 +201,7 @@
                 background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.85) 100%);
             }
             .hero-tekst { padding: 0 20px; text-align: center; }
-            .hero-tekst h1 { font-size: 2rem; }
+            .hero-logo { height: 70px; }
             .hero-tekst .subtitle { font-size: 1rem; }
             .hero-badge { font-size: 0.75rem; }
         }
@@ -502,8 +503,8 @@
 <body>
     <div class="hero">
         <div class="hero-tekst">
+            <img src="/img/norvetuva-logo-min.png" alt="Norvetuva Nord" class="hero-logo">
             <span class="hero-badge">Volvo EC20E i Tromsø</span>
-            <h1>Tromsøs enkleste gravemaskin-utleie</h1>
             <p class="subtitle">2 tonns gravemaskin · Tiltfeste og tre skuffer · Book online · Fleksibel henting med kode</p>
         </div>
     </div>
