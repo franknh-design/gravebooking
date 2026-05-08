@@ -34,31 +34,34 @@
             font-size: 18px;
         }
         .specs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-top: 8px;
         }
         .spec-kort {
             background: var(--bg);
             border-radius: 8px;
-            padding: 12px 16px;
+            padding: 10px 14px;
             border: 1px solid var(--border);
+            flex: 0 0 auto;
         }
         .spec-navn {
-            font-size: 0.82rem;
+            font-size: 0.75rem;
             color: var(--tekst-muted);
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
+            white-space: nowrap;
         }
         .spec-verdi {
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--text);
+            white-space: nowrap;
         }
         @media (max-width: 600px) {
-            .specs-grid { grid-template-columns: repeat(2, 1fr); }
+            .spec-kort { flex: 0 0 calc(50% - 4px); }
         }
 
         /* Footer - enkel og diskret */
