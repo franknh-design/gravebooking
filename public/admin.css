@@ -66,7 +66,7 @@ body {
 /* Topbar */
 .topbar {
     background: white;
-    padding: 14px 20px;
+    padding: 7px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
@@ -411,7 +411,7 @@ body {
 
 /* Mobile */
 @media (max-width: 600px) {
-    .topbar { padding: 12px 14px; }
+    .topbar { padding: 6px 14px; }
     .statistikk-rad { padding: 12px 14px 0; }
     .filter-rad { padding: 12px 14px; }
     #bookingListe { padding: 0 14px 14px; }
