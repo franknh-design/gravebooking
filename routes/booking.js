@@ -8,6 +8,7 @@ const iglohomeService = require('../services/iglohomeService');
 const smsService = require('../services/smsService');
 const prisService = require('../services/prisService');
 const inspeksjonService = require('../services/inspeksjonService');
+const { fmtDato, fmtPeriode } = require('../services/datoUtil');
 const config = require('../config/config');
 
 // Hent maskinkonfig og prismatrise (for frontend)
@@ -239,7 +240,7 @@ router.post('/opprett', async (req, res) => {
                 try {
                     await smsService.sendSms({
                         til: process.env.ADMIN_TELEFON,
-                        melding: `Ny FAKTURA-forespørsel: ${kundeNavn} (${kundeTelefon}) ønsker å leie ${config.maskin.navn} ${startDato} - ${sluttDato} (${totalPris} kr). Behandle i admin.`
+                        melding: `Ny FAKTURA-forespørsel: ${kundeNavn} (${kundeTelefon}) ønsker å leie ${config.maskin.navn} ${fmtPeriode(startDato, sluttDato)} (${totalPris} kr). Behandle i admin.`
                     });
                 } catch (e) { console.error('Admin-varsel feilet:', e.message); }
             }
@@ -355,11 +356,11 @@ async function genererOgSendKode(ordreId) {
 
     const melding = `Hei ${booking.kundeNavn}! Bookingen din for ${config.maskin.navn} er godkjent.
 
-VED HENTING (${booking.startDato}):
+VED HENTING (${fmtDato(booking.startDato)}):
 Ta bilder av maskinen her: ${innsjekkUrl}
 Du får låskoden etter at bildene er tatt.
 
-VED LEVERING (${booking.sluttDato}):
+VED LEVERING (${fmtDato(booking.sluttDato)}):
 Ta bilder av maskinen her: ${utsjekkUrl}
 
 Adresse: ${config.maskin.adresse}
