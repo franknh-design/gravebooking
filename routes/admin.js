@@ -5,7 +5,6 @@ const { getDb } = require('../db/database');
 const bookingRoutes = require('./booking');
 const inspeksjonService = require('../services/inspeksjonService');
 const smsService = require('../services/smsService');
-const { fmtDato, fmtPeriode } = require('../services/datoUtil');
 const config = require('../config/config');
 const multer = require('multer');
 const path = require('path');
@@ -515,7 +514,7 @@ router.post('/send-kode-igjen/:ordreId', async (req, res) => {
 
         await smsService.sendSms({
             til: booking.kundeTelefon,
-            melding: `Hei ${booking.kundeNavn}! Her er din kode på nytt:\n\nNøkkelboks: ${booking.iglohomeKode}\n\nGyldig under hele leieperioden ${fmtPeriode(booking.startDato, booking.sluttDato)}.`
+            melding: `Hei ${booking.kundeNavn}! Her er din kode på nytt:\n\nNøkkelboks: ${booking.iglohomeKode}\n\nGyldig under hele leieperioden ${booking.startDato} - ${booking.sluttDato}.`
         });
 
         // Logg handlingen
@@ -662,7 +661,7 @@ router.post('/forleng/:ordreId', krevAdmin, async (req, res) => {
         });
 
         // Oppdater booking
-        const notatTekst = `[${new Date().toISOString()}] Leie forlenget fra ${fmtDato(booking.sluttDato)} til ${fmtDato(nySluttDato)} (+${ekstraDager} dag${ekstraDager > 1 ? 'er' : ''}, +${tilleggspris} kr). Ny kode generert.`;
+        const notatTekst = `[${new Date().toISOString()}] Leie forlenget fra ${booking.sluttDato} til ${nySluttDato} (+${ekstraDager} dag${ekstraDager > 1 ? 'er' : ''}, +${tilleggspris} kr). Ny kode generert.`;
 
         await db.run(`
             UPDATE bookings
@@ -679,7 +678,7 @@ router.post('/forleng/:ordreId', krevAdmin, async (req, res) => {
         try {
             await smsService.sendSms({
                 til: booking.kundeTelefon,
-                melding: `Hei ${booking.kundeNavn}! Leieperioden din er forlenget til ${fmtDato(nySluttDato)}.\n\nNy kode til nøkkelboksen: ${nyKode.kode}\n\nDen gamle koden fungerer ikke lenger.`
+                melding: `Hei ${booking.kundeNavn}! Leieperioden din er forlenget til ${nySluttDato}.\n\nNy kode til nøkkelboksen: ${nyKode.kode}\n\nDen gamle koden fungerer ikke lenger.`
             });
         } catch (e) {
             console.error('SMS feilet:', e.message);
@@ -691,7 +690,7 @@ router.post('/forleng/:ordreId', krevAdmin, async (req, res) => {
             tilleggspris,
             nySluttDato,
             nyKode: nyKode.kode,
-            melding: `Leie forlenget til ${fmtDato(nySluttDato)}. Ny kode sendt til kunde. Husk å kreve inn ${tilleggspris} kr ekstra via Vipps.`
+            melding: `Leie forlenget til ${nySluttDato}. Ny kode sendt til kunde. Husk å kreve inn ${tilleggspris} kr ekstra via Vipps.`
         });
     } catch (error) {
         console.error('Forleng-feil:', error);
@@ -727,7 +726,7 @@ router.post('/tidlig-retur/:ordreId', krevAdmin, async (req, res) => {
         }
 
         // Oppdater booking: sett sluttdato til i dag og marker som fullført
-        const notatTekst = `[${new Date().toISOString()}] Tidlig retur registrert. Opprinnelig sluttdato: ${fmtDato(booking.sluttDato)}. ${notat || ''}`;
+        const notatTekst = `[${new Date().toISOString()}] Tidlig retur registrert. Opprinnelig sluttdato: ${booking.sluttDato}. ${notat || ''}`;
 
         await db.run(`
             UPDATE bookings 
@@ -874,7 +873,7 @@ router.post('/blokker-datoer', async (req, res) => {
         res.json({ 
             ok: true, 
             ordreId,
-            melding: `Blokkert ${antallDager} dag(er) fra ${fmtDato(startDato)} til ${fmtDato(sluttDato)}`
+            melding: `Blokkert ${antallDager} dag(er) fra ${startDato} til ${sluttDato}` 
         });
     } catch (error) {
         console.error('Blokker-feil:', error);

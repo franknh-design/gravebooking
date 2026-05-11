@@ -4,7 +4,6 @@ const path = require('path');
 const sharp = require('sharp');
 const crypto = require('crypto');
 const { getDb } = require('../db/database');
-const { fmtDato } = require('./datoUtil');
 const config = require('../config/config');
 
 const UPLOAD_BASE = path.join(__dirname, '..', 'uploads');
@@ -220,7 +219,7 @@ async function fullfoerInspeksjon(ordreId, type) {
 
 Din kode til nøkkelboksen: ${booking.iglohomeKode}
 
-Koden er gyldig fra nå til ${fmtDato(booking.sluttDato)} kl 20:00.
+Koden er gyldig fra nå til ${booking.sluttDato} kl 20:00.
 Adresse: ${config.maskin.adresse}
 
 Husk å ta bilder ved levering også - lenken finner du i forrige SMS.`;

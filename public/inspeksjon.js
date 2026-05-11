@@ -12,13 +12,6 @@
     let booking = null;
     let aktivKategori = null;
 
-    function fmtDato(iso) {
-        if (!iso) return '';
-        const [y, m, d] = String(iso).split('T')[0].split('-');
-        if (!y || !m || !d) return iso;
-        return `${d}.${m}.${y}`;
-    }
-
     if (!ordreId || !token) {
         document.body.innerHTML = '<div class="feilside"><h1>Ugyldig lenke</h1><p>Mangler informasjon i URL.</p></div>';
         return;
@@ -61,7 +54,7 @@
         header.innerHTML = `
             <h1>${tittel}</h1>
             <p class="kunde">${data.booking.kundeNavn} · Booking ${data.booking.ordreId}</p>
-            <p class="dato">${datoTekst}: ${fmtDato(data.booking[datoFelt])}</p>
+            <p class="dato">${datoTekst}: ${data.booking[datoFelt]}</p>
         `;
 
         // Hvis allerede fullført, vis melding
