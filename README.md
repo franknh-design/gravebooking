@@ -1,4 +1,4 @@
-# Gravebooking
+# nvnord
 
 Bookingsystem for utleie av Volvo EC20E gravemaskin i Tromsø.
 
@@ -22,7 +22,7 @@ Bookingsystem for utleie av Volvo EC20E gravemaskin i Tromsø.
 ### Installasjon
 
 ```bash
-cd gravebooking
+cd nvnord
 npm install
 ```
 
@@ -55,7 +55,7 @@ Se [TESTING.md](TESTING.md) for full testguide.
 ## Filstruktur
 
 ```
-gravebooking/
+nvnord/
 ├── server.js                 Express-server, ruter
 ├── package.json              Avhengigheter
 ├── .env.example              Mal for miljøvariabler

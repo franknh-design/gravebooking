@@ -1,5 +1,5 @@
 {
-  "name": "gravebooking",
+  "name": "nvnord",
   "version": "0.3.0",
   "description": "Bookingside for utleie av Volvo gravemaskin med Vipps, iglohome og bildedokumentasjon",
   "main": "server.js",

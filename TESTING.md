@@ -11,7 +11,7 @@ Denne guiden viser hvordan du tester hele bookingsystemet lokalt på din egen ma
 ## Førstegangs-oppsett
 
 ```bash
-cd gravebooking
+cd nvnord
 npm install
 ```
 
