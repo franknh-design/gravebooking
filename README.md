@@ -137,13 +137,17 @@ Detaljert produksjonsguide: [SIKKERHET.md](SIKKERHET.md)
 
 Dette er et MVP. Disse tingene gjenstår eller må gjøres manuelt:
 
+- **Vipps ePayment-migrering (blokkerer lansering)** — `services/vippsService.js` bruker eCom API v2, som er legacy hos Vipps MobilePay. Nye salgsenheter får normalt ikke eCom-tilgang; endepunkter og statusmodell må skrives om mot `/epayment/v1/payments`
+- **Capture og cancel mangler** — betalingen blir kun reservert. Reservasjonen må hentes inn eller kanselleres manuelt i Vipps-portalen inntil dette er implementert
+- **Ingen poll-fallback** — Vipps krever at status også hentes med `GET`-kall når callbacken ikke kommer fram. Bookinger kan i dag stå fast i `venter_betaling`
+- **Vipps-knappen følger ikke designretningslinjene** — betalingsknappen bruker egen farge og tekst, ikke Vipps' offisielle knapp med logo
 - **Vippsrefusjoner** håndteres manuelt via Vipps-portalen — ingen automatisk refund-flyt
-- **Depositum** reserveres ikke automatisk — administreres manuelt etter retur
+- **Depositum** reserveres ikke i Vipps, selv om leievilkårene sier at det gjøres ved henting — administreres manuelt etter retur
 - **ID-verifisering** skjer kun via avkrysning, ikke BankID
 - **Skadevurdering** krever menneskelig vurdering — ingen AI-skadepåvisning
 - **GDPR-sletteplan** er beskrevet men ikke implementert som automatisk job
 
-Alle disse kan legges til senere uten å endre kjernearkitekturen.
+Punktene under Vipps må løses før lansering. Resten kan legges til senere uten å endre kjernearkitekturen.
 
 ## Lisens
 

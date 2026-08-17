@@ -112,7 +112,8 @@
                 if (res.ok) {
                     document.getElementById('nedteller').textContent = '✓ Betalt! Sender deg tilbake...';
                     setTimeout(() => {
-                        window.location.href = '/?betalt=' + ordreId;
+                        // Samme retur-parameter som fallBack-URLen Vipps bruker
+                        window.location.href = '/?retur=' + encodeURIComponent(ordreId);
                     }, 1500);
                 } else {
                     document.getElementById('nedteller').textContent = 'Feil: kunne ikke bekrefte';
@@ -125,7 +126,7 @@
         }
 
         function avvis() {
-            window.location.href = '/?avbrutt=' + ordreId;
+            window.location.href = '/?avbrutt=' + encodeURIComponent(ordreId);
         }
     </script>
 </body>

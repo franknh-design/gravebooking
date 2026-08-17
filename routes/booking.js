@@ -8,6 +8,7 @@ const iglohomeService = require('../services/iglohomeService');
 const smsService = require('../services/smsService');
 const prisService = require('../services/prisService');
 const inspeksjonService = require('../services/inspeksjonService');
+const { tolkNorskMobil } = require('../services/telefon');
 const config = require('../config/config');
 
 // Hent maskinkonfig og prismatrise (for frontend)
@@ -135,6 +136,16 @@ router.post('/opprett', async (req, res) => {
             return res.status(400).json({ feil: 'Mangler påkrevde felter' });
         }
 
+        // Normaliser mobilnummeret her, ikke i frontend: Vipps godtar kun 8 sifre
+        // uten landskode, og SMS-en må gå til samme nummer.
+        const mobil = tolkNorskMobil(kundeTelefon);
+        if (!mobil.gyldig) {
+            return res.status(400).json({
+                feil: 'Ugyldig mobilnummer. Bruk et norsk mobilnummer med 8 sifre.'
+            });
+        }
+        const telefonNormalisert = mobil.nasjonalt;
+
         if (!ansvarBekreftet) {
             return res.status(400).json({ feil: 'Ansvarsvilkår må bekreftes' });
         }
@@ -177,7 +188,7 @@ router.post('/opprett', async (req, res) => {
         try {
             kundeId = await finnEllerOpprettKunde({
                 navn: kundeNavn,
-                telefon: kundeTelefon,
+                telefon: telefonNormalisert,
                 epost: kundeEpost
             });
         } catch (e) {
@@ -220,7 +231,7 @@ router.post('/opprett', async (req, res) => {
                 ansvarBekreftet, ansvarTidspunkt, ansvarIp, notater
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
         `, [
-            ordreId, kundeNavn, kundeTelefon, kundeEpost, kundeId,
+            ordreId, kundeNavn, telefonNormalisert, kundeEpost, kundeId,
             startDato, sluttDato, antallDager, totalPris, initialStatus,
             JSON.stringify(tilleggIds), 
             JSON.stringify(transportIds), 
@@ -239,7 +250,7 @@ router.post('/opprett', async (req, res) => {
                 try {
                     await smsService.sendSms({
                         til: process.env.ADMIN_TELEFON,
-                        melding: `Ny FAKTURA-forespørsel: ${kundeNavn} (${kundeTelefon}) ønsker å leie ${config.maskin.navn} ${startDato} - ${sluttDato} (${totalPris} kr). Behandle i admin.`
+                        melding: `Ny FAKTURA-forespørsel: ${kundeNavn} (${telefonNormalisert}) ønsker å leie ${config.maskin.navn} ${startDato} - ${sluttDato} (${totalPris} kr). Behandle i admin.`
                     });
                 } catch (e) { console.error('Admin-varsel feilet:', e.message); }
             }
@@ -261,7 +272,7 @@ router.post('/opprett', async (req, res) => {
         const vippsResultat = await vippsService.initierBetaling({
             ordreId,
             beloep: totalPris,
-            telefon: kundeTelefon,
+            telefon: telefonNormalisert,
             beskrivelse: beskrivelseDeler.join(' ')
         });
 
@@ -280,25 +291,44 @@ router.post('/opprett', async (req, res) => {
     }
 });
 
-// Vipps callback
-router.post('/vipps-callback/:ordreId', async (req, res) => {
+// Vipps callback.
+//
+// Vipps setter selv sammen URLen som callbackPrefix + "/v2/payments/{orderId}",
+// så ruten MÅ ligge på den stien for å bli truffet i produksjon.
+async function haandterVippsCallback(req, res) {
+    const { ordreId } = req.params;
+
     try {
-        const { ordreId } = req.params;
-        const { transactionInfo } = req.body;
+        // Verifiser at kallet faktisk kommer fra Vipps. Vipps returnerer det
+        // authToken vi sendte inn ved betalingsstart i Authorization-headeren.
+        if (config.vipps.callbackAuthToken && !vippsService.erMock()) {
+            if (req.headers['authorization'] !== config.vipps.callbackAuthToken) {
+                console.warn(`Vipps-callback avvist for ${ordreId}: feil authToken`);
+                return res.status(403).json({ feil: 'Ugyldig authToken' });
+            }
+        }
 
         const db = getDb();
         const booking = await db.get('SELECT * FROM bookings WHERE ordreId = ?', [ordreId]);
-        
+
         if (!booking) {
             return res.status(404).json({ feil: 'Booking ikke funnet' });
         }
 
+        // Allerede behandlet: svar 200 slik at Vipps slutter å prøve på nytt.
+        if (booking.betalt) {
+            return res.json({ ok: true, alleredeBehandlet: true });
+        }
+
+        // Stol aldri på innholdet i callbacken - spør Vipps om faktisk status.
         const vippsStatus = await vippsService.sjekkBetalingsStatus(ordreId);
-        const erBetalt = vippsStatus.transactionLogHistory.some(
+        const reservasjon = (vippsStatus.transactionLogHistory || []).find(
             t => t.operation === 'RESERVE' && t.operationSuccess
         );
 
-        if (!erBetalt) {
+        if (!reservasjon) {
+            // Bevisst ikke-2xx: da prøver Vipps på nytt, som er riktig hvis
+            // reservasjonen ikke er registrert hos dem ennå.
             return res.status(400).json({ feil: 'Betaling ikke bekreftet' });
         }
 
@@ -308,28 +338,52 @@ router.post('/vipps-callback/:ordreId', async (req, res) => {
         const kreverGodkjenning = innst?.verdi !== '0';
         const nyStatus = kreverGodkjenning ? 'venter_godkjenning' : 'godkjent';
 
-        await db.run(`
+        const transaksjonsId = req.body?.transactionInfo?.transactionId
+            || reservasjon.transactionId
+            || 'ukjent';
+
+        // Atomisk "claim": kun den første callbacken får changes === 1. Uten dette
+        // gir Vipps' retry dobbel låskode og dobbel SMS til kunden.
+        const oppdatering = await db.run(`
             UPDATE bookings
             SET status = ?, betalt = CURRENT_TIMESTAMP, vippsTransaksjonsId = ?
-            WHERE ordreId = ?
-        `, [nyStatus, transactionInfo?.transactionId || 'ukjent', ordreId]);
+            WHERE ordreId = ? AND betalt IS NULL
+        `, [nyStatus, transaksjonsId, ordreId]);
 
-        if (!kreverGodkjenning) {
-            await genererOgSendKode(ordreId);
-        } else {
-            await smsService.sendSms({
-                til: process.env.ADMIN_TELEFON,
-                melding: `Ny booking ${ordreId} venter på godkjenning. Kunde: ${booking.kundeNavn}`
-            });
+        if (!oppdatering.changes) {
+            return res.json({ ok: true, alleredeBehandlet: true });
         }
 
+        // Svar Vipps FØR igloohome og SMS. Vipps forventer raskt svar, og treg
+        // respons tolkes som feil og utløser retry.
         res.json({ ok: true });
+
+        // Etterarbeid: feil her skal ikke påvirke svaret til Vipps.
+        try {
+            if (!kreverGodkjenning) {
+                await genererOgSendKode(ordreId);
+            } else if (process.env.ADMIN_TELEFON) {
+                await smsService.sendSms({
+                    til: process.env.ADMIN_TELEFON,
+                    melding: `Ny booking ${ordreId} venter på godkjenning. Kunde: ${booking.kundeNavn}`
+                });
+            }
+        } catch (e) {
+            console.error(`Etterarbeid etter Vipps-callback feilet for ${ordreId}:`, e.message);
+        }
 
     } catch (error) {
         console.error('Vipps callback-feil:', error);
-        res.status(500).json({ feil: error.message });
+        if (!res.headersSent) {
+            res.status(500).json({ feil: error.message });
+        }
     }
-});
+}
+
+// Stien Vipps faktisk kaller
+router.post('/vipps/v2/payments/:ordreId', haandterVippsCallback);
+// Beholdt for mock-siden og gamle lenker
+router.post('/vipps-callback/:ordreId', haandterVippsCallback);
 
 async function genererOgSendKode(ordreId) {
     const db = getDb();

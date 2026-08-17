@@ -449,6 +449,11 @@
             margin-bottom: 12px; font-size: 0.85rem;
         }
         .melding.feil { background: #fee; color: #c00; }
+        .melding.info {
+            background: #eef4fb;
+            border-left: 3px solid var(--primary);
+            color: #1a3a5c;
+        }
         .melding.advarsel {
             background: var(--advarsel);
             border-left: 3px solid var(--advarsel-border);
@@ -749,6 +754,23 @@
             }
             await hentOpptatteDatoer();
             oppdaterValgtVisning();
+            visReturmelding();
+        }
+
+        // Kunden sendes hit etter et betalingsforsøk i Vipps. Utfallet bekreftes
+        // serverside via callback, så teksten her lover ingenting.
+        function visReturmelding() {
+            const params = new URLSearchParams(window.location.search);
+
+            if (params.get('avbrutt')) {
+                visMelding('Betalingen ble avbrutt. Ingenting er belastet, og datoene er ikke reservert.', 'advarsel');
+                return;
+            }
+
+            if (params.get('retur')) {
+                visMelding('Takk! Vi behandler betalingen din nå. Du får SMS med bekreftelse så snart den er registrert. Ta kontakt på 91 64 91 92 hvis du ikke hører noe.', 'info');
+                document.getElementById('melding')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         function formaterPris(eksMva) {
@@ -1215,6 +1237,15 @@
             document.getElementById('modalOverlay').classList.remove('synlig');
         }
 
+        // Speiler services/telefon.js på serversiden. Returnerer 8 sifre, eller
+        // null hvis nummeret ikke er et gyldig norsk mobilnummer.
+        function normaliserMobil(nummer) {
+            let sifre = String(nummer || '').replace(/\D/g, '');
+            if (sifre.startsWith('00')) sifre = sifre.slice(2);
+            if (sifre.length === 10 && sifre.startsWith('47')) sifre = sifre.slice(2);
+            return /^[49]\d{7}$/.test(sifre) ? sifre : null;
+        }
+
         async function opprettBooking(betalingsmetode) {
             if (!valgtStart || !valgtSlutt) return;
             
@@ -1241,6 +1272,16 @@
             for (const k of ['kundeNavn','kundeTelefon','kundeEpost']) {
                 if (!data[k]) { visMelding(`Fyll ut: ${k}`, 'feil'); return; }
             }
+
+            // Vipps godtar kun norske mobilnumre på 8 sifre. Normaliser bort
+            // landskode og mellomrom slik at "+47 916 49 192" ikke feiler i API-et.
+            const mobil = normaliserMobil(data.kundeTelefon);
+            if (!mobil) {
+                visMelding('Skriv et norsk mobilnummer med 8 sifre (f.eks. 91649192).', 'feil');
+                document.getElementById('kundeTelefon').focus();
+                return;
+            }
+            data.kundeTelefon = mobil;
 
             const knapp = document.getElementById(betalingsmetode === 'faktura' ? 'fakturaKnapp' : 'bookKnapp');
             const opprinneligTekst = knapp.textContent;

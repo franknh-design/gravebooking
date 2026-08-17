@@ -1,4 +1,6 @@
 // config/config.js - Sentral konfigurasjon
+const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+
 module.exports = {
     vipps: {
         clientId: process.env.VIPPS_CLIENT_ID,
@@ -6,7 +8,21 @@ module.exports = {
         subscriptionKey: process.env.VIPPS_SUBSCRIPTION_KEY,
         merchantSerialNumber: process.env.VIPPS_MSN,
         baseUrl: process.env.VIPPS_BASE_URL || 'https://apitest.vipps.no',
-        callbackPrefix: process.env.CALLBACK_URL || 'https://din-server.no/api/booking/vipps-callback'
+
+        // Vipps setter selv sammen den endelige callback-URLen som
+        // callbackPrefix + "/v2/payments/{orderId}". Prefixet skal derfor IKKE
+        // inneholde ordreId eller ruten som tar imot kallet.
+        // Ferdig URL blir: <prefix>/v2/payments/BOOK-...
+        callbackPrefix: process.env.VIPPS_CALLBACK_PREFIX || `${baseUrl}/api/booking/vipps`,
+
+        // Hemmelig token som sendes til Vipps ved betalingsstart og returneres i
+        // Authorization-headeren på callbacken. Uten denne er callback-endepunktet
+        // åpent for alle (vi verifiserer alltid status mot Vipps, men sett den).
+        callbackAuthToken: process.env.VIPPS_CALLBACK_TOKEN,
+
+        // Siden kunden sendes tilbake til etter betalingsforsøket (både ved
+        // fullført og avbrutt betaling - utfallet må sjekkes serverside).
+        fallbackUrl: `${baseUrl}/`
     },
     iglohome: {
         clientId: process.env.IGLOHOME_CLIENT_ID,
@@ -94,7 +110,7 @@ module.exports = {
         maksFilstoerrelse: 15 * 1024 * 1024, // 15 MB original
         maksBredde: 1920, // resize til denne bredden
         kvalitet: 82, // JPEG-kvalitet 0-100
-        baseUrl: process.env.BASE_URL || 'http://localhost:3000'
+        baseUrl
     },
 
     sms: {
